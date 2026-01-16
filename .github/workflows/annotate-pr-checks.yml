@@ -1,0 +1,121 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run metadata checks
+        id: metadata
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Initialize results
+          cat > results.json << 'INIT'
+          {
+            "pr_number": ${{ github.event.pull_request.number }},
+            "base_ref": "${{ github.event.pull_request.base.ref }}",
+            "description_ok": true,
+            "summary_warning": false,
+            "testplan_warning": false,
+            "api_warning": false,
+            "api_result": "",
+            "changelog_ok": true,
+            "changelog_error": "",
+            "basebranch_ok": true
+          }
+          INIT
+
+          BODY_LOWER=$(echo "$PR_BODY" | tr '[:upper:]' '[:lower:]')
+          IS_PHAB=false
+          if echo "$BODY_LOWER" | grep -q "differential revision:"; then
+            IS_PHAB=true
+          fi
+
+          # Check 1: Description length (≥50 chars)
+          if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 50 ]; then
+            jq '.description_ok = false' results.json > tmp.json && mv tmp.json results.json
+          fi
+
+          # Check 2: Summary section (warn only, skip Phabricator)
+          if [ "$IS_PHAB" = "false" ]; then
+            if ! echo "$BODY_LOWER" | grep -qE "(## summary|summary:)"; then
+              jq '.summary_warning = true' results.json > tmp.json && mv tmp.json results.json
+            fi
+          fi
+
+          # Check 3: Test plan (warn only, skip Phabricator)
+          if [ "$IS_PHAB" = "false" ]; then
+            if ! echo "$BODY_LOWER" | grep -qE "(## test plan|test plan:|tests:|test:)"; then
+              jq '.testplan_warning = true' results.json > tmp.json && mv tmp.json results.json
+            fi
+          fi
+
+          # Check 6: Base branch validation
+          if [[ "$BASE_REF" != "main" && ! "$BASE_REF" =~ -stable$ ]]; then
+            jq '.basebranch_ok = false' results.json > tmp.json && mv tmp.json results.json
+          fi
+
+      # Check 4: JS API changes
+      - name: Run diff-js-api-changes
+        uses: ./.github/actions/diff-js-api-changes
+
+      - name: Capture API changes
+        run: |
+          OUTPUT_FILE="${RUNNER_TEMP}/diff-js-api-changes/output.json"
+          if [ -f "$OUTPUT_FILE" ] && [ -s "$OUTPUT_FILE" ]; then
+            RESULT=$(jq -r '.result // empty' "$OUTPUT_FILE" 2>/dev/null || echo "")
+            if [ -n "$RESULT" ]; then
+              jq --arg r "$RESULT" '.api_warning = true | .api_result = $r' results.json > tmp.json && mv tmp.json results.json
+            fi
+          fi
+
+      # Check 5: Changelog validation (skip Phabricator)
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Run yarn install
+        uses: ./.github/actions/yarn-install
+
+      - name: Validate changelog
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BODY_LOWER=$(echo "$PR_BODY" | tr '[:upper:]' '[:lower:]')
+          if echo "$BODY_LOWER" | grep -q "differential revision:"; then
+            echo "Phabricator PR, skipping changelog check"
+            exit 0
+          fi
+
+          node -e "
+            const validate = require('@rnx-kit/rn-changelog-generator').default.validate;
+            const status = validate(process.env.PR_BODY);
+            if (status === 'missing' || status === 'invalid') {
+              console.log('CHANGELOG_ERROR=' + status);
+              process.exit(0);  // Don't fail, just record
+            }
+          " > changelog_result.txt || true
+
+          if grep -q "CHANGELOG_ERROR=" changelog_result.txt; then
+            ERROR=$(grep "CHANGELOG_ERROR=" changelog_result.txt | cut -d= -f2)
+            jq --arg e "$ERROR" '.changelog_ok = false | .changelog_error = $e' results.json > tmp.json && mv tmp.json results.json
+          fi
+
+      # Upload results for the comment workflow
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-check-results
+          path: results.json
+          retention-days: 1

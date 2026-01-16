@@ -1,0 +1,93 @@
+name: PR Comment
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: github.repository == 'emily8rown/react-native' && github.event.workflow_run.event == 'pull_request'
+    # if: github.repository == 'facebook/react-native' && github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Download results
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-check-results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post comment and labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+            const issues = [];
+
+            if (!results.description_ok) {
+              issues.push('❌ **Missing Description** - PR needs a description (at least 50 characters).');
+            }
+            if (results.summary_warning) {
+              issues.push('⚠️ **Missing Summary** - Consider adding a `## Summary` section to explain motivation.');
+            }
+            if (results.testplan_warning) {
+              issues.push('⚠️ **Missing Test Plan** - Consider adding a `## Test Plan` section.');
+            }
+            if (results.api_warning) {
+              issues.push(`⚠️ **JS API Change Detected** (${results.api_result}) - Please include a clear changelog message.`);
+            }
+            if (!results.changelog_ok) {
+              const link = 'https://reactnative.dev/contributing/changelogs-in-pull-requests';
+              if (results.changelog_error === 'missing') {
+                issues.push(`❌ **Missing Changelog** - Please add a Changelog. See [format](${link}).`);
+              } else {
+                issues.push(`❌ **Invalid Changelog** - See [format](${link}).`);
+              }
+            }
+            if (!results.basebranch_ok) {
+              issues.push('❌ **Invalid Base Branch** - Must target `main` or a `-stable` branch.');
+            }
+
+            // Post comment if there are issues
+            if (issues.length > 0) {
+              const body = `## PR Checks\n\n${issues.join('\n')}\n\n---\n*Automated comment from PR Checks workflow*`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: results.pr_number,
+                body
+              });
+            }
+
+            // Add label for stable branch PRs
+            if (results.base_ref.endsWith('-stable')) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: results.pr_number,
+                labels: ['Pick Request']
+              });
+            }
+
+            // Set output for failure check
+            const hasCriticalFailure = !results.description_ok || !results.changelog_ok || !results.basebranch_ok;
+            core.setOutput('has_failure', hasCriticalFailure);
+
+      - name: Fail if critical checks failed
+        run: |
+          RESULTS=$(cat results.json)
+          DESC_OK=$(echo "$RESULTS" | jq -r '.description_ok')
+          CHANGELOG_OK=$(echo "$RESULTS" | jq -r '.changelog_ok')
+          BASEBRANCH_OK=$(echo "$RESULTS" | jq -r '.basebranch_ok')
+
+          if [ "$DESC_OK" = "false" ] || [ "$CHANGELOG_OK" = "false" ] || [ "$BASEBRANCH_OK" = "false" ]; then
+            echo "Critical check(s) failed"
+            exit 1
+          fi
