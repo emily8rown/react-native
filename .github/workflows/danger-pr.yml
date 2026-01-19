@@ -15,7 +15,7 @@ permissions:
 jobs:
   danger:
     runs-on: ubuntu-latest
-    if: github.repository == 'facebook/react-native'
+    # if: github.repository == 'facebook/react-native'
     steps:
       - name: Check out PR branch
         uses: actions/checkout@v6
@@ -25,8 +25,11 @@ jobs:
         uses: ./.github/actions/yarn-install
       - name: Run diff-js-api-changes
         uses: ./.github/actions/diff-js-api-changes
-      - name: Danger
-        run: yarn danger ci --use-github-checks --failOnErrors
-        working-directory: private/react-native-bots
-        env:
-          DANGER_GITHUB_API_TOKEN: ${{ secrets.REACT_NATIVE_BOT_GITHUB_TOKEN }}
+      - name: Debug - Show API diff output
+        run: cat ${{ runner.temp }}/diff-js-api-changes/output.json
+      # Danger step removed for fork testing
+      # - name: Danger
+      #   run: yarn danger ci --use-github-checks --failOnErrors
+      #   working-directory: private/react-native-bots
+      #   env:
+      #     DANGER_GITHUB_API_TOKEN: ${{ secrets.REACT_NATIVE_BOT_GITHUB_TOKEN }}
