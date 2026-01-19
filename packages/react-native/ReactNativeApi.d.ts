@@ -6218,6 +6218,7 @@ export {
   TVViewPropsIOS, // 330ce7b5
   TargetedEvent, // 16e98910
   TaskProvider, // 266dedf2
+  TestType, // test
   Text, // e55ac2e2
   TextContentType, // 239b3ecc
   TextInput, // cf7a3331
