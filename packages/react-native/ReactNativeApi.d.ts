@@ -593,6 +593,8 @@ declare type ____BlendMode_Internal =
   | "saturation"
   | "screen"
   | "soft-light"
+// Test change for workflow validation DO NOT MERGE
+declare type TestType = string
 declare type ____ColorValue_Internal = NativeColorValue | null | number | string
 declare type ____DangerouslyImpreciseAnimatedStyleProp_Internal =
   WithAnimatedValue<StyleProp<Partial<____DangerouslyImpreciseStyle_Internal>>>
