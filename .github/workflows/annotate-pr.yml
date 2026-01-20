@@ -21,12 +21,12 @@ jobs:
         uses: ./.github/actions/yarn-install
       - name: Run diff-js-api-changes
         uses: ./.github/actions/diff-js-api-changes
-      - name: Check PR body
-        # todo
-        # uses: ./.github/actions/check-pr-body
-      - name: Branch Targetting
-        # todo
-        # uses: ./.github/actions/check-branch-target
+      # - name: Check PR body
+      #   # todo
+      #   # uses: ./.github/actions/check-pr-body
+      # - name: Branch Targetting
+      #   # todo
+      #   # uses: ./.github/actions/check-branch-target
       - name: Post PR comment
         env:
           GH_TOKEN: ${{ github.token }}
