@@ -30,7 +30,7 @@ function getApiChangesMessage(scratchDir) {
 
   try {
     const data = JSON.parse(content);
-    if (!data.breakingChanges || data.breakingChanges.length === 0) {
+    if (!data.changedApis || data.changedApis.length === 0) {
       return null;
     }
     return `### API Changes Detected\n\n${JSON.stringify(data, null, 2)}`;
@@ -108,3 +108,6 @@ ${sections.join('\n\n')}`;
 }
 
 module.exports = postPRComment;
+// Exported for testing purposes
+module.exports._getApiChangesMessage = getApiChangesMessage;
+module.exports._COMMENT_MARKER = COMMENT_MARKER;
