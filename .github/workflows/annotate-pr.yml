@@ -1,0 +1,55 @@
+name: Annotate PR
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  annotate-pr:
+    runs-on: ubuntu-latest
+    # TODO uncomment
+    # if: github.repository == 'facebook/react-native'
+    steps:
+      - name: Check out main branch
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+      - name: Run yarn install
+        uses: ./.github/actions/yarn-install
+      - name: Run diff-js-api-changes
+        uses: ./.github/actions/diff-js-api-changes
+      - name: Check PR body
+        # todo
+        # uses: ./.github/actions/check-pr-body
+      - name: Branch Targetting
+        # todo
+        # uses: ./.github/actions/check-branch-target
+      - name: Post PR comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_BODY: |
+            ## PR Validation
+            *This is a test message - checks will be added incrementally.*
+        run: |
+          MARKER="<!-- react-native-bot -->"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
+
+          # Find existing comment
+          COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" | head -1)
+
+          FULL_BODY="${MARKER}
+          ${COMMENT_BODY}"
+
+          if [ -n "$COMMENT_ID" ]; then
+            echo "Updating existing comment ${COMMENT_ID}"
+            gh api "repos/${REPO}/issues/comments/${COMMENT_ID}" \
+              -X PATCH -f body="$FULL_BODY"
+          else
+            echo "Creating new comment"
+            gh pr comment "$PR_NUMBER" --body "$FULL_BODY"
+          fi
