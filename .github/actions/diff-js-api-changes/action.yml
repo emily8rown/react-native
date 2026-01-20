@@ -54,16 +54,17 @@ runs:
           exit 0
         fi
 
-        MESSAGE="### JavaScript API change detected
-
-        This PR commits an update to \`ReactNativeApi.d.ts\`, indicating a change to React Native's public JavaScript API.
-
-        - Please include a **clear changelog message**.
-        - This change will be subject to additional review.
-
-        This change was flagged as: **\`${RESULT}\`**"
-
         # Use delimiter for multiline output
-        echo "message<<EOF" >> $GITHUB_OUTPUT
-        echo "$MESSAGE" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        {
+          echo "message<<EOF"
+          echo "> [!WARNING]"
+          echo "> **JavaScript API change detected**"
+          echo ">"
+          echo "> This PR commits an update to \`ReactNativeApi.d.ts\`, indicating a change to React Native's public JavaScript API."
+          echo ">"
+          echo "> - Please include a **clear changelog message**."
+          echo "> - This change will be subject to additional review."
+          echo ">"
+          echo "> This change was flagged as: \`${RESULT}\`"
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
