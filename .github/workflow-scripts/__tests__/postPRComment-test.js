@@ -7,12 +7,8 @@
  * @format
  */
 
-const fs = require('fs');
-const path = require('path');
 const postPRComment = require('../postPRComment');
-const {_getApiChangesMessage, _COMMENT_MARKER} = postPRComment;
-
-jest.mock('fs');
+const {_COMMENT_MARKER} = postPRComment;
 
 describe('postPRComment', () => {
   beforeEach(() => {
@@ -20,161 +16,113 @@ describe('postPRComment', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  describe('_getApiChangesMessage', () => {
-    it('returns null if output.json does not exist', () => {
-      fs.existsSync.mockReturnValue(false);
+  const mockGithub = {
+    rest: {
+      issues: {
+        listComments: jest.fn(),
+        createComment: jest.fn(),
+        updateComment: jest.fn(),
+        deleteComment: jest.fn(),
+      },
+    },
+  };
 
-      const result = _getApiChangesMessage('/tmp/scratch');
+  const mockContext = {
+    repo: {owner: 'facebook', repo: 'react-native'},
+    payload: {pull_request: {number: 123}},
+  };
 
-      expect(result).toBeNull();
-      expect(fs.existsSync).toHaveBeenCalledWith('/tmp/scratch/output.json');
+  beforeEach(() => {
+    mockGithub.rest.issues.listComments.mockResolvedValue({data: []});
+    mockGithub.rest.issues.createComment.mockResolvedValue({});
+    mockGithub.rest.issues.updateComment.mockResolvedValue({});
+    mockGithub.rest.issues.deleteComment.mockResolvedValue({});
+  });
+
+  it('does nothing when no messages and no existing comment', async () => {
+    await postPRComment(mockGithub, mockContext, {messages: []});
+
+    expect(mockGithub.rest.issues.createComment).not.toHaveBeenCalled();
+    expect(mockGithub.rest.issues.deleteComment).not.toHaveBeenCalled();
+  });
+
+  it('filters out empty and null messages', async () => {
+    await postPRComment(mockGithub, mockContext, {
+      messages: ['', null, '   ', undefined],
     });
 
-    it('returns null if output.json is empty', () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue('   ');
+    expect(mockGithub.rest.issues.createComment).not.toHaveBeenCalled();
+  });
 
-      const result = _getApiChangesMessage('/tmp/scratch');
-
-      expect(result).toBeNull();
+  it('deletes existing comment when no messages to report', async () => {
+    const existingComment = {
+      id: 456,
+      body: `${_COMMENT_MARKER}\nOld content`,
+    };
+    mockGithub.rest.issues.listComments.mockResolvedValue({
+      data: [existingComment],
     });
 
-    it('returns null if changedApis is empty array', () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(
-        JSON.stringify({result: 'NO_CHANGES', changedApis: []}),
-      );
+    await postPRComment(mockGithub, mockContext, {messages: []});
 
-      const result = _getApiChangesMessage('/tmp/scratch');
-
-      expect(result).toBeNull();
-    });
-
-    it('returns null if changedApis is missing', () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify({otherField: 'value'}));
-
-      const result = _getApiChangesMessage('/tmp/scratch');
-
-      expect(result).toBeNull();
-    });
-
-    it('returns formatted message when changedApis has items', () => {
-      const data = {
-        result: 'POTENTIALLY_NON_BREAKING',
-        changedApis: ['TestType'],
-      };
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify(data));
-
-      const result = _getApiChangesMessage('/tmp/scratch');
-
-      expect(result).toContain('### API Changes Detected');
-      expect(result).toContain('TestType');
-    });
-
-    it('returns raw content if JSON parsing fails', () => {
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue('not valid json');
-
-      const result = _getApiChangesMessage('/tmp/scratch');
-
-      expect(result).toBe('not valid json');
+    expect(mockGithub.rest.issues.deleteComment).toHaveBeenCalledWith({
+      owner: 'facebook',
+      repo: 'react-native',
+      comment_id: 456,
     });
   });
 
-  describe('postPRComment', () => {
-    const mockGithub = {
-      rest: {
-        issues: {
-          listComments: jest.fn(),
-          createComment: jest.fn(),
-          updateComment: jest.fn(),
-          deleteComment: jest.fn(),
-        },
-      },
+  it('creates new comment when there are messages', async () => {
+    await postPRComment(mockGithub, mockContext, {
+      messages: ['### Test Message\n\nSome content'],
+    });
+
+    expect(mockGithub.rest.issues.createComment).toHaveBeenCalledWith({
+      owner: 'facebook',
+      repo: 'react-native',
+      issue_number: 123,
+      body: expect.stringContaining(_COMMENT_MARKER),
+    });
+    expect(mockGithub.rest.issues.createComment).toHaveBeenCalledWith({
+      owner: 'facebook',
+      repo: 'react-native',
+      issue_number: 123,
+      body: expect.stringContaining('Test Message'),
+    });
+  });
+
+  it('updates existing comment when there are messages', async () => {
+    const existingComment = {
+      id: 789,
+      body: `${_COMMENT_MARKER}\nOld content`,
     };
-
-    const mockContext = {
-      repo: {owner: 'facebook', repo: 'react-native'},
-      payload: {pull_request: {number: 123}},
-    };
-
-    beforeEach(() => {
-      mockGithub.rest.issues.listComments.mockResolvedValue({data: []});
-      mockGithub.rest.issues.createComment.mockResolvedValue({});
-      mockGithub.rest.issues.updateComment.mockResolvedValue({});
-      mockGithub.rest.issues.deleteComment.mockResolvedValue({});
+    mockGithub.rest.issues.listComments.mockResolvedValue({
+      data: [existingComment],
     });
 
-    it('does nothing when no scratchDir and no existing comment', async () => {
-      await postPRComment(mockGithub, mockContext, {});
-
-      expect(mockGithub.rest.issues.createComment).not.toHaveBeenCalled();
-      expect(mockGithub.rest.issues.deleteComment).not.toHaveBeenCalled();
+    await postPRComment(mockGithub, mockContext, {
+      messages: ['### Updated Message'],
     });
 
-    it('deletes existing comment when nothing to report', async () => {
-      const existingComment = {
-        id: 456,
-        body: `${_COMMENT_MARKER}\nOld content`,
-      };
-      mockGithub.rest.issues.listComments.mockResolvedValue({
-        data: [existingComment],
-      });
-      fs.existsSync.mockReturnValue(false);
+    expect(mockGithub.rest.issues.updateComment).toHaveBeenCalledWith({
+      owner: 'facebook',
+      repo: 'react-native',
+      comment_id: 789,
+      body: expect.stringContaining(_COMMENT_MARKER),
+    });
+    expect(mockGithub.rest.issues.createComment).not.toHaveBeenCalled();
+  });
 
-      await postPRComment(mockGithub, mockContext, {
-        scratchDir: '/tmp/scratch',
-      });
-
-      expect(mockGithub.rest.issues.deleteComment).toHaveBeenCalledWith({
-        owner: 'facebook',
-        repo: 'react-native',
-        comment_id: 456,
-      });
+  it('combines multiple messages with double newlines', async () => {
+    await postPRComment(mockGithub, mockContext, {
+      messages: ['Message 1', 'Message 2'],
     });
 
-    it('creates new comment when there are issues to report', async () => {
-      const data = {result: 'POTENTIALLY_NON_BREAKING', changedApis: ['Test']};
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify(data));
-
-      await postPRComment(mockGithub, mockContext, {
-        scratchDir: '/tmp/scratch',
-      });
-
-      expect(mockGithub.rest.issues.createComment).toHaveBeenCalledWith({
-        owner: 'facebook',
-        repo: 'react-native',
-        issue_number: 123,
-        body: expect.stringContaining(_COMMENT_MARKER),
-      });
-    });
-
-    it('updates existing comment when there are issues to report', async () => {
-      const existingComment = {
-        id: 789,
-        body: `${_COMMENT_MARKER}\nOld content`,
-      };
-      mockGithub.rest.issues.listComments.mockResolvedValue({
-        data: [existingComment],
-      });
-      const data = {result: 'POTENTIALLY_NON_BREAKING', changedApis: ['Test']};
-      fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue(JSON.stringify(data));
-
-      await postPRComment(mockGithub, mockContext, {
-        scratchDir: '/tmp/scratch',
-      });
-
-      expect(mockGithub.rest.issues.updateComment).toHaveBeenCalledWith({
-        owner: 'facebook',
-        repo: 'react-native',
-        comment_id: 789,
-        body: expect.stringContaining(_COMMENT_MARKER),
-      });
-      expect(mockGithub.rest.issues.createComment).not.toHaveBeenCalled();
+    expect(mockGithub.rest.issues.createComment).toHaveBeenCalledWith({
+      owner: 'facebook',
+      repo: 'react-native',
+      issue_number: 123,
+      body: expect.stringContaining('Message 1\n\nMessage 2'),
     });
   });
 });

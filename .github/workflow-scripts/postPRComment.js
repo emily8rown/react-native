@@ -7,37 +7,7 @@
  * @format
  */
 
-const fs = require('fs');
-const path = require('path');
-
 const COMMENT_MARKER = '<!-- react-native-bot -->';
-
-/**
- * Reads the API changes output file if it exists.
- * @param {string} scratchDir - Path to the scratch directory
- * @returns {string|null} - The formatted API changes message, or null if no changes
- */
-function getApiChangesMessage(scratchDir) {
-  const outputPath = path.join(scratchDir, 'output.json');
-  if (!fs.existsSync(outputPath)) {
-    return null;
-  }
-
-  const content = fs.readFileSync(outputPath, 'utf8').trim();
-  if (!content) {
-    return null;
-  }
-
-  try {
-    const data = JSON.parse(content);
-    if (!data.changedApis || data.changedApis.length === 0) {
-      return null;
-    }
-    return `### API Changes Detected\n\n${JSON.stringify(data, null, 2)}`;
-  } catch {
-    return content || null;
-  }
-}
 
 /**
  * Posts a PR validation comment, updates an existing one, or deletes it if there's nothing to report.
@@ -45,20 +15,15 @@ function getApiChangesMessage(scratchDir) {
  * @param {Object} github - The octokit client from actions/github-script
  * @param {Object} context - The GitHub Actions context
  * @param {Object} options - Options for the comment
- * @param {string} [options.scratchDir] - Path to the scratch directory containing check outputs
+ * @param {string[]} [options.messages] - Array of message strings to include in the comment
  */
 async function postPRComment(github, context, options) {
   const {owner, repo} = context.repo;
   const prNumber = context.payload.pull_request.number;
 
-  const sections = [];
-
-  if (options.scratchDir) {
-    const apiChanges = getApiChangesMessage(options.scratchDir);
-    if (apiChanges) {
-      sections.push(apiChanges);
-    }
-  }
+  const sections = (options.messages || []).filter(
+    msg => msg != null && msg.trim() !== '',
+  );
 
   const {data: comments} = await github.rest.issues.listComments({
     owner,
@@ -109,5 +74,4 @@ ${sections.join('\n\n')}`;
 
 module.exports = postPRComment;
 // Exported for testing purposes
-module.exports._getApiChangesMessage = getApiChangesMessage;
 module.exports._COMMENT_MARKER = COMMENT_MARKER;

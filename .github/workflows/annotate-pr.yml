@@ -19,6 +19,7 @@ jobs:
       - name: Run yarn install
         uses: ./.github/actions/yarn-install
       - name: Run diff-js-api-changes
+        id: diff-js-api
         uses: ./.github/actions/diff-js-api-changes
       # - name: Check PR body
         # todo
@@ -29,10 +30,12 @@ jobs:
       - name: Post PR comment
         uses: actions/github-script@v8
         env:
-          SCRATCH_DIR: ${{ runner.temp }}/diff-js-api-changes
+          API_CHANGES_MESSAGE: ${{ steps.diff-js-api.outputs.message }}
         with:
           script: |
             const postPRComment = require('./.github/workflow-scripts/postPRComment.js');
             await postPRComment(github, context, {
-              scratchDir: process.env.SCRATCH_DIR,
+              messages: [
+                process.env.API_CHANGES_MESSAGE,
+              ],
             });
