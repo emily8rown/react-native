@@ -27,8 +27,9 @@ jobs:
         with:
           script: |
             const validatePRBody = require('./.github/workflow-scripts/validatePRBody.js');
-            const {message} = validatePRBody(context.payload.pull_request.body);
+            const {message, result} = validatePRBody(context.payload.pull_request.body);
             core.setOutput('message', message);
+            core.setOutput('result', result);
       # - name: Branch Targetting
         # todo
         # uses: ./.github/actions/check-branch-target
