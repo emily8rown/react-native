@@ -21,9 +21,14 @@ jobs:
       - name: Run diff-js-api-changes
         id: diff-js-api-changes
         uses: ./.github/actions/diff-js-api-changes
-      # - name: Check PR body
-        # todo
-        # uses: ./.github/actions/check-pr-body
+      - name: Check PR body
+        id: check-pr-body
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const validatePRBody = require('./.github/workflow-scripts/validatePRBody.js');
+            const {message} = validatePRBody(context.payload.pull_request.body);
+            core.setOutput('message', message);
       # - name: Branch Targetting
         # todo
         # uses: ./.github/actions/check-branch-target
@@ -31,4 +36,4 @@ jobs:
         uses: ./.github/actions/post-pr-comment
         with:
           header: '## PR Validation'
-          sections: '[${{ toJSON(steps.diff-js-api-changes.outputs.message) }}]'
+          sections: '[${{ toJSON(steps.diff-js-api-changes.outputs.message) }}, ${{ toJSON(steps.check-pr-body.outputs.message) }}]'
