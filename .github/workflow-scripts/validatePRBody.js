@@ -15,7 +15,7 @@ const {validate} = require('@rnx-kit/rn-changelog-generator').default;
  * Validates PR body for required sections.
  *
  * @param {string} prBody - The PR body text
- * @returns {{message: string, result: 'PASS'|'FAIL'}} - Formatted message and result
+ * @returns {{message: string, status: 'PASS'|'FAIL'}} - Formatted message and status
  */
 function validatePRBody(prBody) {
   const body = prBody ?? '';
@@ -88,7 +88,7 @@ function validatePRBody(prBody) {
 
   return {
     message: messages.join('\n\n'),
-    result: hasFail ? 'FAIL' : 'PASS',
+    status: hasFail ? 'FAIL' : 'PASS',
   };
 }
 

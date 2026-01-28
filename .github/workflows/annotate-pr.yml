@@ -27,13 +27,9 @@ jobs:
         with:
           script: |
             const validatePRBody = require('./.github/workflow-scripts/validatePRBody.js');
-            const {message, result} = validatePRBody(context.payload.pull_request.body);
-            console.log('Setting outputs - message length:', message.length, 'result:', result);
-            console.log('result:', result);
-            console.log('hasFail would be:', result === 'FAIL');
+            const {message, status} = validatePRBody(context.payload.pull_request.body);
             core.setOutput('message', message);
-            core.setOutput('result', result);
-            console.log('Outputs set successfully');
+            core.setOutput('status', status);
       # - name: Branch Targetting
         # todo
         # uses: ./.github/actions/check-branch-target
@@ -42,10 +38,6 @@ jobs:
         with:
           header: '## PR Validation'
           sections: '[${{ toJSON(steps.diff-js-api-changes.outputs.message) }}, ${{ toJSON(steps.check-pr-body.outputs.message) }}]'
-      - name: Debug outputs
-        run: |
-          echo "check-pr-body result: '${{ steps.check-pr-body.outputs.result }}'"
-          echo "Result equals FAIL: ${{ steps.check-pr-body.outputs.result == 'FAIL' }}"
       - name: Fail if validation errors
-        if: steps.check-pr-body.outputs.result == 'FAIL'
+        if: steps.check-pr-body.outputs.status == 'FAIL'
         run: exit 1
