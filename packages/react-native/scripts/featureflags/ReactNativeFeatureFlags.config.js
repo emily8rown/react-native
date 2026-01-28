@@ -806,6 +806,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'canary',
     },
+    useNestedScrollViewAndroid: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-01-16',
+        description:
+          'When enabled, ReactScrollView will extend NestedScrollView instead of ScrollView on Android for improved nested scrolling support.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     useSharedAnimatedBackend: {
       defaultValue: false,
       metadata: {
@@ -933,28 +944,6 @@ const definitions: FeatureFlagDefinitions = {
           'Function used to enable / disabled Layout Animations in React Native.',
         expectedReleaseValue: true,
         purpose: 'release',
-      },
-      ossReleaseStage: 'none',
-    },
-    reduceDefaultPropsInImage: {
-      defaultValue: false,
-      metadata: {
-        dateAdded: '2025-7-29',
-        description:
-          'Optimize how default props are processed in Image to avoid unnecessary keys.',
-        expectedReleaseValue: true,
-        purpose: 'experimentation',
-      },
-      ossReleaseStage: 'none',
-    },
-    reduceDefaultPropsInText: {
-      defaultValue: false,
-      metadata: {
-        dateAdded: '2025-07-25',
-        description:
-          'Optimize how default props are processed in Text to avoid unnecessary keys.',
-        expectedReleaseValue: true,
-        purpose: 'experimentation',
       },
       ossReleaseStage: 'none',
     },

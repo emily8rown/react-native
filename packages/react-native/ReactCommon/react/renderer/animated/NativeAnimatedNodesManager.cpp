@@ -514,11 +514,9 @@ void NativeAnimatedNodesManager::handleAnimatedEvent(
     // proactivelly trigger the animation loop to avoid showing stale
     // frames.
     if (ReactNativeFeatureFlags::useSharedAnimatedBackend()) {
-#ifdef RN_USE_ANIMATION_BACKEND
       if (auto animationBackend = animationBackend_.lock()) {
         animationBackend->trigger();
       }
-#endif
     } else {
       onRender();
     }
@@ -553,12 +551,12 @@ void NativeAnimatedNodesManager::startRenderCallbackIfNeeded(bool isAsync) {
   }
 
   if (ReactNativeFeatureFlags::useSharedAnimatedBackend()) {
-#ifdef RN_USE_ANIMATION_BACKEND
     if (auto animationBackend = animationBackend_.lock()) {
-      animationBackendCallbackId_ = animationBackend->start(
-          [this](float /*f*/) { return pullAnimationMutations(); });
+      animationBackendCallbackId_ =
+          animationBackend->start([this](AnimationTimestamp timestamp) {
+            return pullAnimationMutations(timestamp);
+          });
     }
-#endif
 
     return;
   }
@@ -577,13 +575,11 @@ void NativeAnimatedNodesManager::stopRenderCallbackIfNeeded(
   auto isRenderCallbackStarted = isRenderCallbackStarted_.exchange(false);
 
   if (ReactNativeFeatureFlags::useSharedAnimatedBackend()) {
-#ifdef RN_USE_ANIMATION_BACKEND
     if (isRenderCallbackStarted) {
       if (auto animationBackend = animationBackend_.lock()) {
         animationBackend->stop(animationBackendCallbackId_);
       }
     }
-#endif
     return;
   }
 
@@ -945,8 +941,6 @@ void NativeAnimatedNodesManager::schedulePropsCommit(
   }
 }
 
-#ifdef RN_USE_ANIMATION_BACKEND
-
 void NativeAnimatedNodesManager::insertMutations(
     std::unordered_map<Tag, std::pair<ShadowNodeFamily::Weak, folly::dynamic>>&
         updates,
@@ -974,13 +968,14 @@ void NativeAnimatedNodesManager::insertMutations(
 
 AnimationMutations NativeAnimatedNodesManager::onAnimationFrameForBackend(
     AnimatedPropsBuilder& propsBuilder,
-    double timestamp) {
+    AnimationTimestamp timestamp) {
   AnimationMutations mutations{};
+  auto timestampMs = timestamp.count();
   // Run all active animations
   auto hasFinishedAnimations = false;
   std::set<int> finishedAnimationValueNodes;
   for (const auto& [_id, driver] : activeAnimations_) {
-    driver->runAnimationStep(timestamp);
+    driver->runAnimationStep(timestampMs);
 
     if (driver->getIsComplete()) {
       hasFinishedAnimations = true;
@@ -1017,7 +1012,8 @@ AnimationMutations NativeAnimatedNodesManager::onAnimationFrameForBackend(
   return mutations;
 }
 
-AnimationMutations NativeAnimatedNodesManager::pullAnimationMutations() {
+AnimationMutations NativeAnimatedNodesManager::pullAnimationMutations(
+    AnimationTimestamp timestamp) {
   if (!ReactNativeFeatureFlags::useSharedAnimatedBackend()) {
     return {};
   }
@@ -1043,11 +1039,6 @@ AnimationMutations NativeAnimatedNodesManager::pullAnimationMutations() {
 
   // Step through the animation loop
   if (isAnimationUpdateNeeded()) {
-    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
-                            g_now().time_since_epoch())
-                            .count();
-
-    auto timestamp = static_cast<double>(microseconds) / 1000.0;
     AnimatedPropsBuilder propsBuilder;
     mutations = onAnimationFrameForBackend(propsBuilder, timestamp);
 
@@ -1090,7 +1081,6 @@ AnimationMutations NativeAnimatedNodesManager::pullAnimationMutations() {
   shouldRequestAsyncFlush_.clear();
   return mutations;
 }
-#endif
 
 void NativeAnimatedNodesManager::onRender() {
   if (ReactNativeFeatureFlags::useSharedAnimatedBackend()) {

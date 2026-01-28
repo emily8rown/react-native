@@ -17,10 +17,8 @@
 #include <react/debug/flags.h>
 #include <react/renderer/animated/EventEmitterListener.h>
 #include <react/renderer/animated/event_drivers/EventAnimationDriver.h>
-#ifdef RN_USE_ANIMATION_BACKEND
 #include <react/renderer/animationbackend/AnimatedPropsBuilder.h>
 #include <react/renderer/animationbackend/AnimationBackend.h>
-#endif
 #include <react/renderer/core/ReactPrimitives.h>
 #include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/uimanager/UIManagerAnimationBackend.h>
@@ -121,15 +119,13 @@ class NativeAnimatedNodesManager {
 
   void setAnimatedNodeOffset(Tag tag, double offset);
 
-#ifdef RN_USE_ANIMATION_BACKEND
   void insertMutations(
       std::unordered_map<Tag, std::pair<ShadowNodeFamily::Weak, folly::dynamic>> &updates,
       AnimationMutations &mutations,
       AnimatedPropsBuilder &propsBuilder,
       bool hasLayoutUpdates = false);
-  AnimationMutations onAnimationFrameForBackend(AnimatedPropsBuilder &propsBuilder, double timestamp);
-  AnimationMutations pullAnimationMutations();
-#endif
+  AnimationMutations onAnimationFrameForBackend(AnimatedPropsBuilder &propsBuilder, AnimationTimestamp timestamp);
+  AnimationMutations pullAnimationMutations(AnimationTimestamp timestamp);
 
 #pragma mark - Drivers
 
@@ -286,9 +282,7 @@ class NativeAnimatedNodesManager {
   bool warnedAboutGraphTraversal_ = false;
 #endif
 
-#ifdef RN_USE_ANIMATION_BACKEND
   CallbackId animationBackendCallbackId_{0};
-#endif
 
   friend class ColorAnimatedNode;
   friend class AnimationDriver;
