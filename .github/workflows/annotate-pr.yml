@@ -37,3 +37,6 @@ jobs:
         with:
           header: '## PR Validation'
           sections: '[${{ toJSON(steps.diff-js-api-changes.outputs.message) }}, ${{ toJSON(steps.check-pr-body.outputs.message) }}]'
+      - name: Fail if validation errors
+        if: steps.check-pr-body.outputs.result == 'FAIL'
+        run: exit 1
