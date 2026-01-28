@@ -28,6 +28,8 @@ jobs:
           script: |
             const validatePRBody = require('./.github/workflow-scripts/validatePRBody.js');
             const {message, result} = validatePRBody(context.payload.pull_request.body);
+            console.log('result:', result);
+            console.log('hasFail would be:', result === 'FAIL');
             core.setOutput('message', message);
             core.setOutput('result', result);
       # - name: Branch Targetting
