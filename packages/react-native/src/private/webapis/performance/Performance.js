@@ -37,23 +37,23 @@ import {PerformanceMark, PerformanceMeasure} from './UserTiming';
 import nullthrows from 'nullthrows';
 
 export type PerformanceMeasureOptions =
-  | $ReadOnly<{
+  | Readonly<{
       detail?: DetailType,
       start?: DOMHighResTimeStamp | string,
       duration?: DOMHighResTimeStamp,
     }>
-  | $ReadOnly<{
+  | Readonly<{
       detail?: DetailType,
       start?: DOMHighResTimeStamp | string,
       end?: DOMHighResTimeStamp | string,
     }>
-  | $ReadOnly<{
+  | Readonly<{
       detail?: DetailType,
       duration?: DOMHighResTimeStamp | string,
       end?: DOMHighResTimeStamp | string,
     }>;
 
-const ENTRY_TYPES_AVAILABLE_FROM_TIMELINE: $ReadOnlyArray<PerformanceEntryType> =
+const ENTRY_TYPES_AVAILABLE_FROM_TIMELINE: ReadonlyArray<PerformanceEntryType> =
   ['mark', 'measure'];
 
 const NativePerformance = nullthrows(MaybeNativePerformance);
@@ -63,6 +63,7 @@ const cachedReportMeasure = NativePerformance.reportMeasure;
 const cachedGetMarkTime = NativePerformance.getMarkTime;
 const cachedNativeClearMarks = NativePerformance.clearMarks;
 const cachedNativeClearMeasures = NativePerformance.clearMeasures;
+let cachedTimeOrigin: ?DOMHighResTimeStamp;
 
 const MARK_OPTIONS_REUSABLE_OBJECT: PerformanceMarkOptions = {
   startTime: 0,
@@ -93,7 +94,11 @@ const getMarkTimeForMeasure = (markName: string): number => {
  * https://www.w3.org/TR/user-timing/#extensions-performance-interface
  */
 export default class Performance {
-  eventCounts: EventCounts = new EventCounts();
+  #eventCounts: EventCounts = new EventCounts();
+
+  get eventCounts(): EventCounts {
+    return this.#eventCounts;
+  }
 
   // Get the current JS memory information.
   get memory(): MemoryInfo {
@@ -123,20 +128,34 @@ export default class Performance {
   get rnStartupTiming(): ReactNativeStartupTiming {
     const {
       startTime,
-      endTime,
       initializeRuntimeStart,
-      initializeRuntimeEnd,
       executeJavaScriptBundleEntryPointStart,
-      executeJavaScriptBundleEntryPointEnd,
+      endTime,
     } = NativePerformance.getReactNativeStartupTiming();
     return new ReactNativeStartupTiming({
       startTime,
-      endTime,
       initializeRuntimeStart,
-      initializeRuntimeEnd,
       executeJavaScriptBundleEntryPointStart,
-      executeJavaScriptBundleEntryPointEnd,
+      endTime,
     });
+  }
+
+  /**
+   * Returns the high resolution timestamp that is used as the baseline for
+   * performance-related timestamps.
+   * https://developer.mozilla.org/en-US/docs/Web/API/Performance/timeOrigin
+   */
+  get timeOrigin(): DOMHighResTimeStamp {
+    if (cachedTimeOrigin == null) {
+      if (NativePerformance.timeOrigin) {
+        cachedTimeOrigin = NativePerformance?.timeOrigin();
+      } else {
+        // Very naive polyfill.
+        cachedTimeOrigin = Date.now() - getCurrentTimeStamp();
+      }
+    }
+
+    return cachedTimeOrigin;
   }
 
   mark(
@@ -221,7 +240,7 @@ export default class Performance {
     let resolvedMeasureName: string;
     let resolvedStartTime: number;
     let resolvedDuration: number;
-    let resolvedDetail: mixed;
+    let resolvedDetail: unknown;
 
     if (measureName === undefined) {
       throw new TypeError(

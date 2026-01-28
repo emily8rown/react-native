@@ -5,12 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import com.facebook.react.internal.PrivateReactExtension
 import com.facebook.react.tasks.internal.*
 import de.undercouch.gradle.tasks.download.Download
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id("maven-publish")
   id("signing")
   alias(libs.plugins.android.library)
   alias(libs.plugins.download)
@@ -50,6 +50,8 @@ fun getSDKManagerPath(): String {
   }
 }
 
+val hermesV1Enabled =
+    rootProject.extensions.getByType(PrivateReactExtension::class.java).hermesV1Enabled.get()
 val reactNativeRootDir = project(":packages:react-native:ReactAndroid").projectDir.parent
 val customDownloadDir = System.getenv("REACT_NATIVE_DOWNLOADS_DIR")
 val downloadsDir =
@@ -79,12 +81,21 @@ val hermesBuildOutputFileTree =
     fileTree(hermesBuildDir.toString())
         .include("**/*.cmake", "**/*.marks", "**/compiler_depends.ts", "**/Makefile", "**/link.txt")
 
-var hermesVersion = "main"
-val hermesVersionFile = File(reactNativeRootDir, "sdks/.hermesversion")
+val hermesVersionProvider: Provider<String> =
+    providers.provider {
+      var hermesVersion = if (hermesV1Enabled) "250829098.0.0-stable" else "main"
+      val hermesVersionFile =
+          File(
+              reactNativeRootDir,
+              if (hermesV1Enabled) "sdks/.hermesv1version" else "sdks/.hermesversion",
+          )
 
-if (hermesVersionFile.exists()) {
-  hermesVersion = hermesVersionFile.readText()
-}
+      if (hermesVersionFile.exists()) {
+        hermesVersion = hermesVersionFile.readText()
+      }
+
+      hermesVersion
+    }
 
 val ndkBuildJobs = Runtime.getRuntime().availableProcessors().toString()
 val prefabHeadersDir = File("$buildDir/prefab-headers")
@@ -95,7 +106,11 @@ val jsiDir = File(reactNativeRootDir, "ReactCommon/jsi")
 val downloadHermesDest = File(downloadsDir, "hermes.tar.gz")
 val downloadHermes by
     tasks.registering(Download::class) {
-      src("https://github.com/facebook/hermes/tarball/${hermesVersion}")
+      src(
+          providers.provider {
+            "https://github.com/facebook/hermes/tarball/${hermesVersionProvider.get()}"
+          }
+      )
       onlyIfModified(true)
       overwrite(true)
       quiet(true)
@@ -134,27 +149,55 @@ val installCMake by
       )
     }
 
+fun configureBuildForHermesCommandLineArgs(
+    hermesBuildDir: File,
+    jsiDir: File,
+    enableDebugger: Boolean,
+): List<String> {
+  var cmakeCommandLine =
+      windowsAwareCommandLine(
+          cmakeBinaryPath,
+          // Suppress all warnings as this is the Hermes build and we can't fix them.
+          "--log-level=ERROR",
+          "-Wno-dev",
+          "-S",
+          ".",
+          "-B",
+          hermesBuildDir.toString(),
+          "-DJSI_DIR=" + jsiDir.absolutePath,
+          "-DCMAKE_BUILD_TYPE=Release",
+      )
+  if (enableDebugger) {
+    cmakeCommandLine = cmakeCommandLine + "-DHERMES_ENABLE_DEBUGGER=True"
+  }
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    cmakeCommandLine = cmakeCommandLine + "-GNMake Makefiles"
+  }
+  if (hermesV1Enabled) {
+    cmakeCommandLine = cmakeCommandLine + "-DHERMESVM_HEAP_HV_MODE=HEAP_HV_PREFER32"
+  }
+
+  return cmakeCommandLine
+}
+
+fun buildHermesCCommandLineArgs() =
+    listOf(
+        cmakeBinaryPath,
+        "--build",
+        hermesBuildDir.toString(),
+        "--target",
+        "hermesc",
+        "-j",
+        ndkBuildJobs,
+    )
+
 val configureBuildForHermes by
     tasks.registering(CustomExecTask::class) {
       dependsOn(installCMake)
       workingDir(hermesDir)
       inputs.dir(hermesDir)
       outputs.files(hermesBuildOutputFileTree)
-      var cmakeCommandLine =
-          windowsAwareCommandLine(
-              cmakeBinaryPath,
-              // Suppress all warnings as this is the Hermes build and we can't fix them.
-              "--log-level=ERROR",
-              "-Wno-dev",
-              "-S",
-              ".",
-              "-B",
-              hermesBuildDir.toString(),
-              "-DJSI_DIR=" + jsiDir.absolutePath,
-          )
-      if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        cmakeCommandLine = cmakeCommandLine + "-GNMake Makefiles"
-      }
+      val cmakeCommandLine = configureBuildForHermesCommandLineArgs(hermesBuildDir, jsiDir, false)
       commandLine(cmakeCommandLine)
       standardOutputFile.set(project.file("$buildDir/configure-hermesc.log"))
     }
@@ -165,15 +208,8 @@ val buildHermesC by
       workingDir(hermesDir)
       inputs.files(hermesBuildOutputFileTree)
       outputs.file(hermesCOutputBinary)
-      commandLine(
-          cmakeBinaryPath,
-          "--build",
-          hermesBuildDir.toString(),
-          "--target",
-          "hermesc",
-          "-j",
-          ndkBuildJobs,
-      )
+      val cmakeCommandLine = buildHermesCCommandLineArgs()
+      commandLine(cmakeCommandLine)
       standardOutputFile.set(project.file("$buildDir/build-hermesc.log"))
       errorOutputFile.set(project.file("$buildDir/build-hermesc.error.log"))
     }
@@ -191,6 +227,60 @@ val prepareHeadersForPrefab by
 val buildHermesLib by
     tasks.registering(CustomExecTask::class) {
       dependsOn(buildHermesC)
+      workingDir(hermesDir)
+      inputs.files(hermesBuildOutputFileTree)
+      commandLine(
+          cmakeBinaryPath,
+          "--build",
+          hermesBuildDir.toString(),
+          "--target",
+          "hermesvm",
+          "-j",
+          ndkBuildJobs,
+      )
+      standardOutputFile.set(project.file("$buildDir/build-hermes-lib.log"))
+      errorOutputFile.set(project.file("$buildDir/build-hermes-lib.error.log"))
+    }
+
+// The repeated tasks below named "*WithDebugger" are required by Fantom.
+// Hermes V1 by default builds with the debugger disabled, while Fantom needs
+// it to be enabled as it does a debug build of React Native.
+val configureBuildForHermesWithDebugger by
+    tasks.registering(CustomExecTask::class) {
+      dependsOn(installCMake)
+      workingDir(hermesDir)
+      inputs.dir(hermesDir)
+      outputs.files(hermesBuildOutputFileTree)
+      val cmakeCommandLine = configureBuildForHermesCommandLineArgs(hermesBuildDir, jsiDir, true)
+      commandLine(cmakeCommandLine)
+      standardOutputFile.set(project.file("$buildDir/configure-hermesc.log"))
+    }
+
+val buildHermesCWithDebugger by
+    tasks.registering(CustomExecTask::class) {
+      dependsOn(configureBuildForHermesWithDebugger)
+      workingDir(hermesDir)
+      inputs.files(hermesBuildOutputFileTree)
+      outputs.file(hermesCOutputBinary)
+      val cmakeCommandLine = buildHermesCCommandLineArgs()
+      commandLine(cmakeCommandLine)
+      standardOutputFile.set(project.file("$buildDir/build-hermesc.log"))
+      errorOutputFile.set(project.file("$buildDir/build-hermesc.error.log"))
+    }
+
+val prepareHeadersForPrefabWithDebugger by
+    tasks.registering(Copy::class) {
+      dependsOn(buildHermesCWithDebugger)
+      from("$hermesDir/API")
+      from("$hermesDir/public")
+      include("**/*.h")
+      exclude("jsi/**")
+      into(prefabHeadersDir)
+    }
+
+val buildHermesLibWithDebugger by
+    tasks.registering(CustomExecTask::class) {
+      dependsOn(buildHermesCWithDebugger)
       workingDir(hermesDir)
       inputs.files(hermesBuildOutputFileTree)
       commandLine(
@@ -269,6 +359,10 @@ android {
             "-DHERMES_ENABLE_INTL=True",
         )
 
+        if (hermesV1Enabled) {
+          arguments("-DHERMESVM_HEAP_HV_MODE=HEAP_HV_PREFER32")
+        }
+
         targets("hermesvm")
       }
     }
@@ -295,7 +389,11 @@ android {
           // Therefore we're passing as build type Release, to provide a faster build.
           // This has the (unlucky) side effect of letting AGP call the build
           // tasks `configureCMakeRelease` while is actually building the debug flavor.
-          arguments("-DCMAKE_BUILD_TYPE=Release")
+          arguments(
+              "-DCMAKE_BUILD_TYPE=Release",
+              // For debug builds, explicitly enable the Hermes Debugger.
+              "-DHERMES_ENABLE_DEBUGGER=True",
+          )
         }
       }
     }
@@ -323,10 +421,7 @@ android {
     java.srcDirs("$hermesDir/lib/Platform/Intl/java", "$hermesDir/lib/Platform/Unicode/java")
   }
 
-  buildFeatures {
-    prefab = true
-    prefabPublishing = true
-  }
+  buildFeatures { prefab = true }
 
   dependencies {
     implementation(libs.fbjni)
@@ -340,13 +435,6 @@ android {
     jniLibs.excludes.add("**/libfbjni.so")
   }
 
-  publishing {
-    multipleVariants {
-      withSourcesJar()
-      allVariants()
-    }
-  }
-
   prefab { create("hermesvm") { headers = prefabHeadersDir.absolutePath } }
 }
 
@@ -356,6 +444,8 @@ afterEvaluate {
     // download/unzip Hermes from Github then.
     tasks.getByName("configureBuildForHermes").dependsOn(unzipHermes)
     tasks.getByName("prepareHeadersForPrefab").dependsOn(unzipHermes)
+    tasks.getByName("configureBuildForHermesWithDebugger").dependsOn(unzipHermes)
+    tasks.getByName("prepareHeadersForPrefabWithDebugger").dependsOn(unzipHermes)
   }
   tasks.getByName("preBuild").dependsOn(buildHermesC)
   tasks.getByName("preBuild").dependsOn(prepareHeadersForPrefab)
@@ -364,15 +454,4 @@ afterEvaluate {
 tasks.withType<JavaCompile>().configureEach {
   options.compilerArgs.add("-Xlint:deprecation,unchecked")
   options.compilerArgs.add("-Werror")
-}
-
-/* Publishing Configuration */
-apply(from = "../publish.gradle")
-
-// We need to override the artifact ID as this project is called `hermes-engine` but
-// the maven coordinates are on `hermes-android`.
-// Please note that the original coordinates, `hermes-engine`, have been voided
-// as they caused https://github.com/facebook/react-native/issues/35210
-publishing {
-  publications { getByName("release", MavenPublication::class) { artifactId = "hermes-android" } }
 }

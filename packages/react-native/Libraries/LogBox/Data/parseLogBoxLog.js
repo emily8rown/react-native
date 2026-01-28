@@ -93,7 +93,7 @@ const RE_BABEL_CODE_FRAME_MARKER_PATTERN = new RegExp(
   'm',
 );
 
-export function hasComponentStack(args: $ReadOnlyArray<mixed>): boolean {
+export function hasComponentStack(args: ReadonlyArray<unknown>): boolean {
   for (const arg of args) {
     if (typeof arg === 'string' && isComponentStack(arg)) {
       return true;
@@ -107,7 +107,7 @@ export type ExtendedExceptionData = ExceptionData & {
   ...
 };
 export type Category = string;
-export type CodeFrame = $ReadOnly<{
+export type CodeFrame = Readonly<{
   content: string,
   location: ?{
     row: number,
@@ -121,22 +121,22 @@ export type CodeFrame = $ReadOnly<{
   // it is not integrated into the LogBox UI.
   collapse?: boolean,
 }>;
-export type Message = $ReadOnly<{
+export type Message = Readonly<{
   content: string,
-  substitutions: $ReadOnlyArray<
-    $ReadOnly<{
+  substitutions: ReadonlyArray<
+    Readonly<{
       length: number,
       offset: number,
     }>,
   >,
 }>;
 
-export type ComponentStack = $ReadOnlyArray<CodeFrame>;
+export type ComponentStack = ReadonlyArray<CodeFrame>;
 export type ComponentStackType = 'legacy' | 'stack';
 
 const SUBSTITUTION = UTFSequence.BOM + '%s';
 
-export function parseInterpolation(args: $ReadOnlyArray<mixed>): $ReadOnly<{
+export function parseInterpolation(args: ReadonlyArray<unknown>): Readonly<{
   category: Category,
   message: Message,
 }> {
@@ -444,7 +444,7 @@ export function parseLogBoxException(
   };
 }
 
-export function withoutANSIColorStyles(message: mixed): mixed {
+export function withoutANSIColorStyles(message: unknown): unknown {
   if (typeof message !== 'string') {
     return message;
   }
@@ -456,14 +456,14 @@ export function withoutANSIColorStyles(message: mixed): mixed {
   );
 }
 
-export function parseLogBoxLog(args: $ReadOnlyArray<mixed>): {
+export function parseLogBoxLog(args: ReadonlyArray<unknown>): {
   componentStack: ComponentStack,
   componentStackType: ComponentStackType,
   category: Category,
   message: Message,
 } {
   const message = withoutANSIColorStyles(args[0]);
-  let argsWithoutComponentStack: Array<mixed> = [];
+  let argsWithoutComponentStack: Array<unknown> = [];
   let componentStack: ComponentStack = [];
   let componentStackType = 'legacy';
 

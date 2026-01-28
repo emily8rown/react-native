@@ -23,9 +23,7 @@ import connect from 'connect';
 import path from 'path';
 import serveStaticMiddleware from 'serve-static';
 
-type Options = $ReadOnly<{
-  projectRoot: string,
-
+type Options = Readonly<{
   /**
    * The base URL to the dev server, as reachable from the machine on which
    * dev-middleware is hosted. Typically `http://localhost:${metroPort}`.
@@ -72,13 +70,12 @@ type Options = $ReadOnly<{
   unstable_trackInspectorProxyEventLoopPerf?: boolean,
 }>;
 
-type DevMiddlewareAPI = $ReadOnly<{
+type DevMiddlewareAPI = Readonly<{
   middleware: NextHandleFunction,
   websocketEndpoints: {[path: string]: ws$WebSocketServer},
 }>;
 
 export default function createDevMiddleware({
-  projectRoot,
   serverBaseUrl,
   logger,
   // $FlowFixMe[incompatible-type]
@@ -96,7 +93,6 @@ export default function createDevMiddleware({
   );
 
   const inspectorProxy = new InspectorProxy(
-    projectRoot,
     serverBaseUrl,
     eventReporter,
     experiments,
@@ -142,7 +138,7 @@ function getExperiments(config: ExperimentsConfig): Experiments {
   return {
     enableOpenDebuggerRedirect: config.enableOpenDebuggerRedirect ?? false,
     enableNetworkInspector: config.enableNetworkInspector ?? false,
-    enableStandaloneFuseboxShell: config.enableStandaloneFuseboxShell ?? false,
+    enableStandaloneFuseboxShell: config.enableStandaloneFuseboxShell ?? true,
   };
 }
 
@@ -162,17 +158,6 @@ function createWrappedEventReporter(
           logger?.info(
             "Profiling build target '%s' registered for debugging",
             event.appId ?? 'unknown',
-          );
-          break;
-        case 'fusebox_console_notice':
-          logger?.info(
-            '\u001B[1m\u001B[7m💡 JavaScript logs have moved!\u001B[22m They can now be ' +
-              'viewed in React Native DevTools. Tip: Type \u001B[1mj\u001B[22m in ' +
-              'the terminal to open' +
-              (experiments.enableStandaloneFuseboxShell
-                ? ''
-                : ' (requires Google Chrome or Microsoft Edge)') +
-              '.\u001B[27m',
           );
           break;
         case 'fusebox_shell_preparation_attempt':

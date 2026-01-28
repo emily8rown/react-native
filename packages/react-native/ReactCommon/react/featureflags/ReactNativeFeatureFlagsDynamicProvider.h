@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<027cef9dd44f14a71be7c0d1b90238b3>>
+ * @generated SignedSource<<b04b2269efaa4394985f1e90b5761bb2>>
  */
 
 /**
@@ -72,22 +72,22 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::cxxNativeAnimatedEnabled();
   }
 
-  bool cxxNativeAnimatedRemoveJsSync() override {
-    auto value = values_["cxxNativeAnimatedRemoveJsSync"];
+  bool disableEarlyViewCommandExecution() override {
+    auto value = values_["disableEarlyViewCommandExecution"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::cxxNativeAnimatedRemoveJsSync();
+    return ReactNativeFeatureFlagsDefaults::disableEarlyViewCommandExecution();
   }
 
-  bool disableFabricCommitInCXXAnimated() override {
-    auto value = values_["disableFabricCommitInCXXAnimated"];
+  bool disableImageViewPreallocationAndroid() override {
+    auto value = values_["disableImageViewPreallocationAndroid"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::disableFabricCommitInCXXAnimated();
+    return ReactNativeFeatureFlagsDefaults::disableImageViewPreallocationAndroid();
   }
 
   bool disableMountItemReorderingAndroid() override {
@@ -99,13 +99,13 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::disableMountItemReorderingAndroid();
   }
 
-  bool disableOldAndroidAttachmentMetricsWorkarounds() override {
-    auto value = values_["disableOldAndroidAttachmentMetricsWorkarounds"];
+  bool disableSubviewClippingAndroid() override {
+    auto value = values_["disableSubviewClippingAndroid"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::disableOldAndroidAttachmentMetricsWorkarounds();
+    return ReactNativeFeatureFlagsDefaults::disableSubviewClippingAndroid();
   }
 
   bool disableTextLayoutManagerCacheAndroid() override {
@@ -115,6 +115,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::disableTextLayoutManagerCacheAndroid();
+  }
+
+  bool disableViewPreallocationAndroid() override {
+    auto value = values_["disableViewPreallocationAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::disableViewPreallocationAndroid();
   }
 
   bool enableAccessibilityOrder() override {
@@ -133,6 +142,24 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::enableAccumulatedUpdatesInRawPropsAndroid();
+  }
+
+  bool enableAndroidAntialiasedBorderRadiusClipping() override {
+    auto value = values_["enableAndroidAntialiasedBorderRadiusClipping"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableAndroidAntialiasedBorderRadiusClipping();
+  }
+
+  bool enableAndroidLinearText() override {
+    auto value = values_["enableAndroidLinearText"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableAndroidLinearText();
   }
 
   bool enableAndroidTextMeasurementOptimizations() override {
@@ -207,6 +234,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enableEagerRootViewAttachment();
   }
 
+  bool enableExclusivePropsUpdateAndroid() override {
+    auto value = values_["enableExclusivePropsUpdateAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableExclusivePropsUpdateAndroid();
+  }
+
   bool enableFabricLogs() override {
     auto value = values_["enableFabricLogs"];
     if (!value.isNull()) {
@@ -261,6 +297,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enableImagePrefetchingAndroid();
   }
 
+  bool enableImagePrefetchingJNIBatchingAndroid() override {
+    auto value = values_["enableImagePrefetchingJNIBatchingAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableImagePrefetchingJNIBatchingAndroid();
+  }
+
   bool enableImagePrefetchingOnUiThreadAndroid() override {
     auto value = values_["enableImagePrefetchingOnUiThreadAndroid"];
     if (!value.isNull()) {
@@ -279,6 +324,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enableImmediateUpdateModeForContentOffsetChanges();
   }
 
+  bool enableImperativeFocus() override {
+    auto value = values_["enableImperativeFocus"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableImperativeFocus();
+  }
+
   bool enableInteropViewManagerClassLookUpOptimizationIOS() override {
     auto value = values_["enableInteropViewManagerClassLookUpOptimizationIOS"];
     if (!value.isNull()) {
@@ -286,6 +340,24 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::enableInteropViewManagerClassLookUpOptimizationIOS();
+  }
+
+  bool enableIntersectionObserverByDefault() override {
+    auto value = values_["enableIntersectionObserverByDefault"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableIntersectionObserverByDefault();
+  }
+
+  bool enableKeyEvents() override {
+    auto value = values_["enableKeyEvents"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableKeyEvents();
   }
 
   bool enableLayoutAnimationsOnAndroid() override {
@@ -360,13 +432,13 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enablePropsUpdateReconciliationAndroid();
   }
 
-  bool enableResourceTimingAPI() override {
-    auto value = values_["enableResourceTimingAPI"];
+  bool enableSwiftUIBasedFilters() override {
+    auto value = values_["enableSwiftUIBasedFilters"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::enableResourceTimingAPI();
+    return ReactNativeFeatureFlagsDefaults::enableSwiftUIBasedFilters();
   }
 
   bool enableViewCulling() override {
@@ -385,6 +457,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::enableViewRecycling();
+  }
+
+  bool enableViewRecyclingForImage() override {
+    auto value = values_["enableViewRecyclingForImage"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableViewRecyclingForImage();
   }
 
   bool enableViewRecyclingForScrollView() override {
@@ -414,6 +495,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enableViewRecyclingForView();
   }
 
+  bool enableVirtualViewContainerStateExperimental() override {
+    auto value = values_["enableVirtualViewContainerStateExperimental"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::enableVirtualViewContainerStateExperimental();
+  }
+
   bool enableVirtualViewDebugFeatures() override {
     auto value = values_["enableVirtualViewDebugFeatures"];
     if (!value.isNull()) {
@@ -423,24 +513,6 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::enableVirtualViewDebugFeatures();
   }
 
-  bool enableVirtualViewRenderState() override {
-    auto value = values_["enableVirtualViewRenderState"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::enableVirtualViewRenderState();
-  }
-
-  bool enableVirtualViewWindowFocusDetection() override {
-    auto value = values_["enableVirtualViewWindowFocusDetection"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::enableVirtualViewWindowFocusDetection();
-  }
-
   bool fixMappingOfEventPrioritiesBetweenFabricAndReact() override {
     auto value = values_["fixMappingOfEventPrioritiesBetweenFabricAndReact"];
     if (!value.isNull()) {
@@ -448,6 +520,24 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::fixMappingOfEventPrioritiesBetweenFabricAndReact();
+  }
+
+  bool fixTextClippingAndroid15useBoundsForWidth() override {
+    auto value = values_["fixTextClippingAndroid15useBoundsForWidth"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::fixTextClippingAndroid15useBoundsForWidth();
+  }
+
+  bool fuseboxAssertSingleHostState() override {
+    auto value = values_["fuseboxAssertSingleHostState"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::fuseboxAssertSingleHostState();
   }
 
   bool fuseboxEnabledRelease() override {
@@ -475,6 +565,24 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::hideOffscreenVirtualViewsOnIOS();
+  }
+
+  bool overrideBySynchronousMountPropsAtMountingAndroid() override {
+    auto value = values_["overrideBySynchronousMountPropsAtMountingAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::overrideBySynchronousMountPropsAtMountingAndroid();
+  }
+
+  bool perfIssuesEnabled() override {
+    auto value = values_["perfIssuesEnabled"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::perfIssuesEnabled();
   }
 
   bool perfMonitorV2Enabled() override {
@@ -513,6 +621,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::shouldPressibilityUseW3CPointerEventsForHover();
   }
 
+  bool shouldTriggerResponderTransferOnScrollAndroid() override {
+    auto value = values_["shouldTriggerResponderTransferOnScrollAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::shouldTriggerResponderTransferOnScrollAndroid();
+  }
+
   bool skipActivityIdentityAssertionOnHostPause() override {
     auto value = values_["skipActivityIdentityAssertionOnHostPause"];
     if (!value.isNull()) {
@@ -520,15 +637,6 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::skipActivityIdentityAssertionOnHostPause();
-  }
-
-  bool sweepActiveTouchOnChildNativeGesturesAndroid() override {
-    auto value = values_["sweepActiveTouchOnChildNativeGesturesAndroid"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::sweepActiveTouchOnChildNativeGesturesAndroid();
   }
 
   bool traceTurboModulePromiseRejectionsOnAndroid() override {
@@ -567,24 +675,6 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::useFabricInterop();
   }
 
-  bool useNativeEqualsInNativeReadableArrayAndroid() override {
-    auto value = values_["useNativeEqualsInNativeReadableArrayAndroid"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::useNativeEqualsInNativeReadableArrayAndroid();
-  }
-
-  bool useNativeTransformHelperAndroid() override {
-    auto value = values_["useNativeTransformHelperAndroid"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::useNativeTransformHelperAndroid();
-  }
-
   bool useNativeViewConfigsInBridgelessMode() override {
     auto value = values_["useNativeViewConfigsInBridgelessMode"];
     if (!value.isNull()) {
@@ -594,31 +684,22 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::useNativeViewConfigsInBridgelessMode();
   }
 
-  bool useOptimizedEventBatchingOnAndroid() override {
-    auto value = values_["useOptimizedEventBatchingOnAndroid"];
+  bool useSharedAnimatedBackend() override {
+    auto value = values_["useSharedAnimatedBackend"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::useOptimizedEventBatchingOnAndroid();
+    return ReactNativeFeatureFlagsDefaults::useSharedAnimatedBackend();
   }
 
-  bool useRawPropsJsiValue() override {
-    auto value = values_["useRawPropsJsiValue"];
+  bool useTraitHiddenOnAndroid() override {
+    auto value = values_["useTraitHiddenOnAndroid"];
     if (!value.isNull()) {
       return value.getBool();
     }
 
-    return ReactNativeFeatureFlagsDefaults::useRawPropsJsiValue();
-  }
-
-  bool useShadowNodeStateOnClone() override {
-    auto value = values_["useShadowNodeStateOnClone"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::useShadowNodeStateOnClone();
+    return ReactNativeFeatureFlagsDefaults::useTraitHiddenOnAndroid();
   }
 
   bool useTurboModuleInterop() override {
@@ -639,13 +720,13 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     return ReactNativeFeatureFlagsDefaults::useTurboModules();
   }
 
-  double virtualViewHysteresisRatio() override {
-    auto value = values_["virtualViewHysteresisRatio"];
+  double viewCullingOutsetRatio() override {
+    auto value = values_["viewCullingOutsetRatio"];
     if (!value.isNull()) {
       return value.getDouble();
     }
 
-    return ReactNativeFeatureFlagsDefaults::virtualViewHysteresisRatio();
+    return ReactNativeFeatureFlagsDefaults::viewCullingOutsetRatio();
   }
 
   double virtualViewPrerenderRatio() override {

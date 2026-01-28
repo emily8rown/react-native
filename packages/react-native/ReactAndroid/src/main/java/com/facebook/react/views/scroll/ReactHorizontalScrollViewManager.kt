@@ -85,6 +85,12 @@ constructor(private val fpsListener: FpsListener? = null) :
       stateWrapper: StateWrapper,
   ): Any? {
     view.setStateWrapper(stateWrapper)
+    if (
+        ReactNativeFeatureFlags.enableViewCulling() ||
+            ReactNativeFeatureFlags.useTraitHiddenOnAndroid()
+    ) {
+      ReactScrollViewHelper.loadFabricScrollState(view, stateWrapper)
+    }
     return null
   }
 
@@ -109,6 +115,11 @@ constructor(private val fpsListener: FpsListener? = null) :
       disableIntervalMomentum: Boolean,
   ) {
     view.setDisableIntervalMomentum(disableIntervalMomentum)
+  }
+
+  @ReactProp(name = "scrollsChildToFocus", defaultBoolean = true)
+  public fun setScrollsChildToFocus(view: ReactHorizontalScrollView, scrollsChildToFocus: Boolean) {
+    view.setScrollsChildToFocus(scrollsChildToFocus)
   }
 
   @ReactProp(name = "snapToInterval")

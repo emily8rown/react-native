@@ -193,7 +193,7 @@ describe('Animated', () => {
 
     it('renders animated and primitive style correctly', () => {
       const anim = new Animated.Value(0);
-      const staticProps: {[string]: mixed} = {
+      const staticProps: {[string]: unknown} = {
         style: [
           {transform: [{translateX: anim}]},
           {transform: [{translateX: 100}]},
@@ -701,7 +701,7 @@ describe('Animated', () => {
       expect(cb).toBeCalledWith({finished: true});
     });
 
-    it('parellelizes well', () => {
+    it('parallelizes well', () => {
       const anim1 = {start: jest.fn()};
       const anim2 = {start: jest.fn()};
       const cb = jest.fn();
@@ -870,56 +870,6 @@ describe('Animated', () => {
       forkedHandler({foo: 42});
       expect(listener2.mock.calls.length).toBe(1);
       expect(listener2).toBeCalledWith({foo: 42});
-    });
-  });
-
-  describe('Animated Interactions', () => {
-    let Animated; // eslint-disable-line no-shadow
-    let InteractionManager;
-
-    beforeEach(() => {
-      jest.mock('../../Interaction/InteractionManager');
-      Animated = require('../Animated').default;
-      InteractionManager =
-        require('../../Interaction/InteractionManager').default;
-    });
-
-    afterEach(() => {
-      jest.unmock('../../Interaction/InteractionManager');
-    });
-
-    it('registers an interaction by default', () => {
-      // $FlowFixMe[prop-missing]
-      InteractionManager.createInteractionHandle.mockReturnValue(777);
-
-      const value = new Animated.Value(0);
-      const callback = jest.fn();
-      Animated.timing(value, {
-        toValue: 100,
-        duration: 100,
-        useNativeDriver: false,
-      }).start(callback);
-      jest.runAllTimers();
-
-      expect(InteractionManager.createInteractionHandle).toBeCalled();
-      expect(InteractionManager.clearInteractionHandle).toBeCalledWith(777);
-      expect(callback).toBeCalledWith({finished: true});
-    });
-
-    it('does not register an interaction when specified', () => {
-      const value = new Animated.Value(0);
-      const callback = jest.fn();
-      Animated.timing(value, {
-        toValue: 100,
-        duration: 100,
-        isInteraction: false,
-        useNativeDriver: false,
-      }).start(callback);
-      jest.runAllTimers();
-
-      expect(InteractionManager.createInteractionHandle).not.toBeCalled();
-      expect(InteractionManager.clearInteractionHandle).not.toBeCalled();
-      expect(callback).toBeCalledWith({finished: true});
     });
   });
 

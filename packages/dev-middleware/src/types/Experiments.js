@@ -8,7 +8,7 @@
  * @format
  */
 
-export type Experiments = $ReadOnly<{
+export type Experiments = Readonly<{
   /**
    * Enables the handling of GET requests in the /open-debugger endpoint,
    * in addition to POST requests. GET requests respond by redirecting to
@@ -20,7 +20,7 @@ export type Experiments = $ReadOnly<{
   /**
    * Enables the Network panel in the debugger frontend.
    */
-  // NOTE: Used by Expo, exposing a tab labelled "Network (Expo, unstable)"
+  // NOTE: Used by Expo, exposing a tab labelled "Network (Expo)"
   enableNetworkInspector: boolean,
 
   /**

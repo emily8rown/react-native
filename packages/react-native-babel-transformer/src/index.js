@@ -23,13 +23,14 @@ import type {
 */
 
 const {parseSync, transformFromAstSync} = require('@babel/core');
+const {getCacheKey: getPresetCacheKey} = require('@react-native/babel-preset');
 const makeHMRConfig = require('@react-native/babel-preset/src/configs/hmr');
 const crypto = require('crypto');
 const fs = require('fs');
 const nullthrows = require('nullthrows');
 const path = require('path');
 
-const cacheKeyParts = [fs.readFileSync(__filename)];
+const cacheKeyParts = [getPresetCacheKey(), fs.readFileSync(__filename)];
 
 // TS detection conditions copied from @react-native/babel-preset
 function isTypeScriptSource(fileName /*: string */) {
@@ -192,7 +193,14 @@ const transform /*: BabelTransformer['transform'] */ = ({
       // ES modules require sourceType='module' but OSS may not always want that
       sourceType: 'unambiguous',
       ...buildBabelConfig(filename, options, plugins),
-      caller: {name: 'metro', bundler: 'metro', platform: options.platform},
+      caller: {
+        // Varies Babel's config cache - presets will be re-initialized
+        // if they use caller information.
+        name: 'metro',
+        bundler: 'metro',
+        platform: options.platform,
+        unstable_transformProfile: options.unstable_transformProfile,
+      },
       ast: true,
 
       // NOTE(EvanBacon): We split the parse/transform steps up to accommodate
