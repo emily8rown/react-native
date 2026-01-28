@@ -18,11 +18,15 @@ runs:
   steps:
     - name: Create, update, or delete comment
       uses: actions/github-script@v8
+      env:
+        SECTIONS_INPUT: ${{ inputs.sections }}
+        MARKER_INPUT: ${{ inputs.marker }}
+        HEADER_INPUT: ${{ inputs.header }}
       with:
         script: |
-          const marker = `${{ inputs.marker }}`;
-          const header = `${{ inputs.header }}`;
-          const sections = JSON.parse(`${{ inputs.sections }}`)
+          const marker = process.env.MARKER_INPUT;
+          const header = process.env.HEADER_INPUT;
+          const sections = JSON.parse(process.env.SECTIONS_INPUT)
             .filter(Boolean)
             .filter(s => s.trim());
 
