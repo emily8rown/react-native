@@ -10,7 +10,7 @@ permissions:
 jobs:
   annotate-pr:
     runs-on: ubuntu-latest
-    # if: github.repository == 'facebook/react-native'
+    if: github.repository == 'facebook/react-native'
     steps:
       - name: Check out main branch
         uses: actions/checkout@v6
@@ -19,7 +19,7 @@ jobs:
       - name: Run yarn install
         uses: ./.github/actions/yarn-install
       - name: Run diff-js-api-changes
-        id: diff-js-api
+        id: diff-js-api-changes
         uses: ./.github/actions/diff-js-api-changes
       # - name: Check PR body
         # todo
@@ -28,14 +28,7 @@ jobs:
         # todo
         # uses: ./.github/actions/check-branch-target
       - name: Post PR comment
-        uses: actions/github-script@v8
-        env:
-          API_CHANGES_MESSAGE: ${{ steps.diff-js-api.outputs.message }}
+        uses: ./.github/actions/post-pr-comment
         with:
-          script: |
-            const postPRComment = require('./.github/workflow-scripts/postPRComment.js');
-            await postPRComment(github, context, {
-              messages: [
-                process.env.API_CHANGES_MESSAGE,
-              ],
-            });
+          header: '## PR Validation'
+          sections: '[${{ toJSON(steps.diff-js-api-changes.outputs.message) }}]'
