@@ -13,7 +13,7 @@ export GITHUB_REPO=-react-native
 
   echo flow
   npm run flow-check --silent --json
-} | node private/react-native-bots/code-analysis-bot.js
+} | node .github/workflow-scripts/code-analysis-bot.js
 
 STATUS=$?
 if [ $STATUS == 0 ]; then
