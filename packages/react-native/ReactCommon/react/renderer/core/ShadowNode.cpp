@@ -112,20 +112,13 @@ ShadowNode::ShadowNode(
       props_(propsForClonedShadowNode(sourceShadowNode, fragment.props)),
       children_(
           fragment.children ? fragment.children : sourceShadowNode.children_),
-      state_(
-          fragment.state ? fragment.state
-                         : (ReactNativeFeatureFlags::useShadowNodeStateOnClone()
-                                ? sourceShadowNode.state_
-                                : sourceShadowNode.getMostRecentState())),
+      state_(fragment.state ? fragment.state : sourceShadowNode.state_),
       orderIndex_(sourceShadowNode.orderIndex_),
       family_(sourceShadowNode.family_),
       traits_(sourceShadowNode.traits_) {
 
   react_native_assert(props_);
   react_native_assert(children_);
-
-  // State could have been progressed above by checking
-  // `sourceShadowNode.getMostRecentState()`.
   traits_.set(ShadowNodeTraits::Trait::ChildrenAreShared);
 
   if (fragment.children) {
@@ -412,7 +405,6 @@ namespace {
 
 std::shared_ptr<ShadowNode> cloneMultipleRecursive(
     const ShadowNode& shadowNode,
-    const std::unordered_set<const ShadowNodeFamily*>& familiesToUpdate,
     const std::unordered_map<const ShadowNodeFamily*, int>& childrenCount,
     const std::function<std::shared_ptr<
         ShadowNode>(const ShadowNode&, const ShadowNodeFragment&)>& callback) {
@@ -421,7 +413,7 @@ std::shared_ptr<ShadowNode> cloneMultipleRecursive(
   std::shared_ptr<std::vector<std::shared_ptr<const ShadowNode>>> newChildren;
   auto count = childrenCount.at(family);
 
-  for (int i = 0; count > 0 && i < children.size(); i++) {
+  for (size_t i = 0; count > 0 && i < children.size(); i++) {
     const auto childFamily = &children[i]->getFamily();
     if (childrenCount.contains(childFamily)) {
       count--;
@@ -430,16 +422,12 @@ std::shared_ptr<ShadowNode> cloneMultipleRecursive(
             std::make_shared<std::vector<std::shared_ptr<const ShadowNode>>>(
                 children);
       }
-      (*newChildren)[i] = cloneMultipleRecursive(
-          *children[i], familiesToUpdate, childrenCount, callback);
+      (*newChildren)[i] =
+          cloneMultipleRecursive(*children[i], childrenCount, callback);
     }
   }
 
-  ShadowNodeFragment fragment{.children = newChildren};
-  if (familiesToUpdate.contains(family)) {
-    return callback(shadowNode, fragment);
-  }
-  return shadowNode.clone(fragment);
+  return callback(shadowNode, {.children = newChildren});
 }
 
 } // namespace
@@ -479,8 +467,7 @@ std::shared_ptr<ShadowNode> ShadowNode::cloneMultiple(
     return nullptr;
   }
 
-  return cloneMultipleRecursive(
-      *this, familiesToUpdate, childrenCount, callback);
+  return cloneMultipleRecursive(*this, childrenCount, callback);
 }
 
 #pragma mark - DebugStringConvertible

@@ -23,7 +23,7 @@ import {
 import fs from 'fs';
 import path from 'path';
 
-type TesterOptions = $ReadOnly<{
+type TesterOptions = Readonly<{
   isOptimizedMode: boolean,
   hermesVariant: HermesVariant,
 }>;
@@ -74,7 +74,7 @@ export function build(options: TesterOptions): void {
 }
 
 export function run(
-  args: $ReadOnlyArray<string>,
+  args: ReadonlyArray<string>,
   options: TesterOptions,
 ): SyncCommandResult {
   if (!isCI) {

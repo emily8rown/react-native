@@ -126,6 +126,8 @@ static void calculateShadowViewMutations(
     const CullingContext& oldCullingContext = {},
     const CullingContext& newCullingContext = {});
 
+namespace {
+
 struct OrderedMutationInstructionContainer {
   ShadowViewMutation::List createMutations{};
   ShadowViewMutation::List deleteMutations{};
@@ -135,6 +137,8 @@ struct OrderedMutationInstructionContainer {
   ShadowViewMutation::List downwardMutations{};
   ShadowViewMutation::List destructiveDownwardMutations{};
 };
+
+} // namespace
 
 static void updateMatchedPairSubtrees(
     ViewNodePairScope& scope,
@@ -1377,8 +1381,9 @@ ShadowViewMutation::List calculateShadowViewMutations(
   auto newRootShadowView = ShadowView(newRootShadowNode);
 
   if (oldRootShadowView != newRootShadowView) {
-    mutations.push_back(ShadowViewMutation::UpdateMutation(
-        oldRootShadowView, newRootShadowView, {}));
+    mutations.push_back(
+        ShadowViewMutation::UpdateMutation(
+            oldRootShadowView, newRootShadowView, {}));
   }
 
   auto sliceOne = sliceChildShadowNodeViewPairs(

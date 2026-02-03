@@ -45,12 +45,14 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     ref: forwardedRef,
     accessible,
     accessibilityLabel,
+    accessibilityRole,
     accessibilityState,
     allowFontScaling,
     'aria-busy': ariaBusy,
     'aria-checked': ariaChecked,
     'aria-disabled': ariaDisabled,
     'aria-expanded': ariaExpanded,
+    'aria-hidden': ariaHidden,
     'aria-label': ariaLabel,
     'aria-selected': ariaSelected,
     children,
@@ -70,6 +72,7 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     onResponderTerminationRequest,
     onStartShouldSetResponder,
     pressRetentionOffset,
+    role,
     selectable,
     selectionColor,
     suppressHighlighting,
@@ -126,6 +129,13 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
       _accessibilityState.disabled = _disabled;
     }
 
+    if (ariaHidden !== undefined) {
+      processedProps.accessibilityElementsHidden = ariaHidden;
+      if (ariaHidden === true) {
+        processedProps.importantForAccessibility = 'no-hide-descendants';
+      }
+    }
+
     const _accessible = Platform.select({
       ios: accessible !== false,
       android:
@@ -140,6 +150,14 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
         onLongPress != null ||
         onStartShouldSetResponder != null) &&
       _disabled !== true;
+
+    const shouldUseLinkRole =
+      isPressable && accessibilityRole == null && role == null;
+
+    const _accessibilityRole =
+      accessibilityRole ?? (shouldUseLinkRole ? 'link' : undefined);
+
+    const _role = shouldUseLinkRole ? undefined : role;
 
     // TODO: Move this processing to the view configuration.
     const _selectionColor =
@@ -198,6 +216,9 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     if (_accessibilityLabel !== undefined) {
       processedProps.accessibilityLabel = _accessibilityLabel;
     }
+    if (_accessibilityRole !== undefined) {
+      processedProps.accessibilityRole = _accessibilityRole;
+    }
     if (_accessibilityState !== undefined) {
       processedProps.accessibilityState = _accessibilityState;
     }
@@ -215,6 +236,9 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     }
     if (_selectionColor !== undefined) {
       processedProps.selectionColor = _selectionColor;
+    }
+    if (_role !== undefined) {
+      processedProps.role = _role;
     }
 
     let textPressabilityProps: ?TextPressabilityProps;
@@ -306,13 +330,17 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
   ) = ({
     ref: forwardedRef,
     accessible,
+    accessibilityElementsHidden,
+    importantForAccessibility,
     accessibilityLabel,
+    accessibilityRole,
     accessibilityState,
     allowFontScaling,
     'aria-busy': ariaBusy,
     'aria-checked': ariaChecked,
     'aria-disabled': ariaDisabled,
     'aria-expanded': ariaExpanded,
+    'aria-hidden': ariaHidden,
     'aria-label': ariaLabel,
     'aria-selected': ariaSelected,
     children,
@@ -332,6 +360,7 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     onResponderTerminationRequest,
     onStartShouldSetResponder,
     pressRetentionOffset,
+    role,
     selectable,
     selectionColor,
     suppressHighlighting,
@@ -374,11 +403,26 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
     const _accessibilityStateDisabled = _accessibilityState?.disabled;
     const _disabled = disabled ?? _accessibilityStateDisabled;
 
+    let _accessibilityElementsHidden =
+      ariaHidden ?? accessibilityElementsHidden;
+    let _importantForAccessibility = importantForAccessibility;
+    if (ariaHidden === true) {
+      _importantForAccessibility = 'no-hide-descendants';
+    }
+
     const isPressable =
       (onPress != null ||
         onLongPress != null ||
         onStartShouldSetResponder != null) &&
       _disabled !== true;
+
+    const shouldUseLinkRole =
+      isPressable && accessibilityRole == null && role == null;
+
+    const _accessibilityRole =
+      accessibilityRole ?? (shouldUseLinkRole ? 'link' : undefined);
+
+    const _role = shouldUseLinkRole ? undefined : role;
 
     // TODO: Move this processing to the view configuration.
     const _selectionColor =
@@ -442,14 +486,18 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
             ref={forwardedRef}
             textProps={{
               ...restProps,
+              accessibilityElementsHidden: _accessibilityElementsHidden,
               accessibilityLabel: _accessibilityLabel,
+              accessibilityRole: _accessibilityRole,
               accessibilityState: _accessibilityState,
+              importantForAccessibility: _importantForAccessibility,
               nativeID: _nativeID,
               numberOfLines: _numberOfLines,
               selectable: _selectable,
               selectionColor: _selectionColor,
               style: _style,
               disabled: disabled,
+              role: _role,
               children,
             }}
             textPressabilityProps={{
@@ -473,15 +521,19 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
       return (
         <NativeVirtualText
           {...restProps}
+          accessibilityElementsHidden={_accessibilityElementsHidden}
           accessibilityLabel={_accessibilityLabel}
+          accessibilityRole={_accessibilityRole}
           accessibilityState={_accessibilityState}
+          importantForAccessibility={_importantForAccessibility}
           nativeID={_nativeID}
           numberOfLines={_numberOfLines}
           ref={forwardedRef}
           selectable={_selectable}
           selectionColor={_selectionColor}
           style={_style}
-          disabled={disabled}>
+          disabled={disabled}
+          role={_role}>
           {children}
         </NativeVirtualText>
       );
@@ -514,17 +566,21 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
           ref={forwardedRef}
           textProps={{
             ...restProps,
+            accessibilityElementsHidden: _accessibilityElementsHidden,
             accessibilityLabel: _accessibilityLabel,
+            accessibilityRole: _accessibilityRole,
             accessibilityState: _accessibilityState,
             accessible: _accessible,
             allowFontScaling: allowFontScaling !== false,
             disabled: _disabled,
             ellipsizeMode: ellipsizeMode ?? 'tail',
+            importantForAccessibility: _importantForAccessibility,
             nativeID: _nativeID,
             numberOfLines: _numberOfLines,
             selectable: _selectable,
             selectionColor: _selectionColor,
             style: _style,
+            role: _role,
             children,
           }}
           textPressabilityProps={{
@@ -547,18 +603,22 @@ if (ReactNativeFeatureFlags.reduceDefaultPropsInText()) {
       nativeText = (
         <NativeText
           {...restProps}
+          accessibilityElementsHidden={_accessibilityElementsHidden}
           accessibilityLabel={_accessibilityLabel}
+          accessibilityRole={_accessibilityRole}
           accessibilityState={_accessibilityState}
           accessible={_accessible}
           allowFontScaling={allowFontScaling !== false}
           disabled={_disabled}
           ellipsizeMode={ellipsizeMode ?? 'tail'}
+          importantForAccessibility={_importantForAccessibility}
           nativeID={_nativeID}
           numberOfLines={_numberOfLines}
           ref={forwardedRef}
           selectable={_selectable}
           selectionColor={_selectionColor}
-          style={_style}>
+          style={_style}
+          role={_role}>
           {children}
         </NativeText>
       );
@@ -601,11 +661,11 @@ const TextImpl: component(
 
 TextImpl.displayName = 'Text';
 
-type TextPressabilityProps = $ReadOnly<{
-  onLongPress?: ?(event: GestureResponderEvent) => mixed,
-  onPress?: ?(event: GestureResponderEvent) => mixed,
-  onPressIn?: ?(event: GestureResponderEvent) => mixed,
-  onPressOut?: ?(event: GestureResponderEvent) => mixed,
+type TextPressabilityProps = Readonly<{
+  onLongPress?: ?(event: GestureResponderEvent) => unknown,
+  onPress?: ?(event: GestureResponderEvent) => unknown,
+  onPressIn?: ?(event: GestureResponderEvent) => unknown,
+  onPressOut?: ?(event: GestureResponderEvent) => unknown,
   onResponderGrant?: ?(event: GestureResponderEvent) => void,
   onResponderMove?: ?(event: GestureResponderEvent) => void,
   onResponderRelease?: ?(event: GestureResponderEvent) => void,
@@ -735,7 +795,7 @@ function useTextPressability({
   );
 }
 
-type NativePressableTextProps = $ReadOnly<{
+type NativePressableTextProps = Readonly<{
   textProps: NativeTextProps,
   textPressabilityProps: TextPressabilityProps,
 }>;

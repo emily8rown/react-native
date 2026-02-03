@@ -13,8 +13,8 @@ import type {ViewStyleProp} from '../StyleSheet/StyleSheet';
 import type {
   ListRenderItem,
   ListRenderItemInfo,
+  ListViewToken,
   ViewabilityConfigCallbackPair,
-  ViewToken,
   VirtualizedListProps,
 } from '@react-native/virtualized-lists';
 
@@ -38,7 +38,7 @@ type RequiredFlatListProps<ItemT> = {
    * An array (or array-like list) of items to render. Other data types can be
    * used by targeting VirtualizedList directly.
    */
-  data: ?$ReadOnly<$ArrayLike<ItemT>>,
+  data: ?Readonly<$ArrayLike<ItemT>>,
 };
 type OptionalFlatListProps<ItemT> = {
   /**
@@ -93,7 +93,7 @@ type OptionalFlatListProps<ItemT> = {
    * specify `ItemSeparatorComponent`.
    */
   getItemLayout?: (
-    data: ?$ReadOnly<$ArrayLike<ItemT>>,
+    data: ?Readonly<$ArrayLike<ItemT>>,
     index: number,
   ) => {
     length: number,
@@ -172,7 +172,7 @@ function numColumnsOrDefault(numColumns: ?number) {
   return numColumns ?? 1;
 }
 
-function isArrayLike(data: mixed): boolean {
+function isArrayLike(data: unknown): boolean {
   // $FlowExpectedError[incompatible-use]
   return typeof Object(data).length === 'number';
 }
@@ -413,7 +413,7 @@ class FlatList<ItemT = any> extends React.PureComponent<FlatListProps<ItemT>> {
     }
   }
 
-  setNativeProps(props: {[string]: mixed, ...}) {
+  setNativeProps(props: {[string]: unknown, ...}) {
     if (this._listRef) {
       this._listRef.setNativeProps(props);
     }
@@ -519,7 +519,7 @@ class FlatList<ItemT = any> extends React.PureComponent<FlatListProps<ItemT>> {
   _getItem = (
     data: $ArrayLike<ItemT>,
     index: number,
-  ): ?(ItemT | $ReadOnlyArray<ItemT>) => {
+  ): ?(ItemT | ReadonlyArray<ItemT>) => {
     const numColumns = numColumnsOrDefault(this.props.numColumns);
     if (numColumns > 1) {
       const ret = [];
@@ -573,7 +573,7 @@ class FlatList<ItemT = any> extends React.PureComponent<FlatListProps<ItemT>> {
     return keyExtractor(items, index);
   };
 
-  _pushMultiColumnViewable(arr: Array<ViewToken>, v: ViewToken): void {
+  _pushMultiColumnViewable(arr: Array<ListViewToken>, v: ListViewToken): void {
     const numColumns = numColumnsOrDefault(this.props.numColumns);
     const keyExtractor = this.props.keyExtractor ?? defaultKeyExtractor;
     v.item.forEach((item, ii) => {
@@ -585,22 +585,22 @@ class FlatList<ItemT = any> extends React.PureComponent<FlatListProps<ItemT>> {
 
   _createOnViewableItemsChanged(
     onViewableItemsChanged: ?(info: {
-      viewableItems: Array<ViewToken>,
-      changed: Array<ViewToken>,
+      viewableItems: Array<ListViewToken>,
+      changed: Array<ListViewToken>,
       ...
     }) => void,
     // $FlowFixMe[missing-local-annot]
   ) {
     return (info: {
-      viewableItems: Array<ViewToken>,
-      changed: Array<ViewToken>,
+      viewableItems: Array<ListViewToken>,
+      changed: Array<ListViewToken>,
       ...
     }) => {
       const numColumns = numColumnsOrDefault(this.props.numColumns);
       if (onViewableItemsChanged) {
         if (numColumns > 1) {
-          const changed: Array<ViewToken> = [];
-          const viewableItems: Array<ViewToken> = [];
+          const changed: Array<ListViewToken> = [];
+          const viewableItems: Array<ListViewToken> = [];
           info.viewableItems.forEach(v =>
             this._pushMultiColumnViewable(viewableItems, v),
           );

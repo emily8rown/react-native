@@ -24,10 +24,10 @@ const clearCachedValuesFns: Array<() => void> = [];
 
 export type Getter<T> = () => T;
 
-// This defines the types for the overrides object, whose methods also receive
-// the default value as a parameter.
+// This defines the types for the overrides object, whose methods can return
+// null or undefined to fallback to the default value.
 export type OverridesFor<T> = Partial<{
-  [key in keyof T]: (ReturnType<T[key]>) => ReturnType<T[key]>,
+  [key in keyof T]: Getter<?ReturnType<T[key]>>,
 }>;
 
 function createGetter<T: boolean | number | string>(
@@ -52,7 +52,7 @@ function createGetter<T: boolean | number | string>(
 }
 
 export function createJavaScriptFlagGetter<
-  K: $Keys<ReactNativeFeatureFlagsJsOnly>,
+  K: keyof ReactNativeFeatureFlagsJsOnly,
 >(
   configName: K,
   defaultValue: ReturnType<ReactNativeFeatureFlagsJsOnly[K]>,
@@ -61,19 +61,19 @@ export function createJavaScriptFlagGetter<
     configName,
     () => {
       accessedFeatureFlags.add(configName);
-      return overrides?.[configName]?.(defaultValue);
+      return overrides?.[configName]?.();
     },
     defaultValue,
   );
 }
 
-type NativeFeatureFlags = $NonMaybeType<typeof NativeReactNativeFeatureFlags>;
+type NativeFeatureFlags = NonNullable<typeof NativeReactNativeFeatureFlags>;
 
-export function createNativeFlagGetter<K: $Keys<NativeFeatureFlags>>(
+export function createNativeFlagGetter<K: keyof NativeFeatureFlags>(
   configName: K,
-  defaultValue: ReturnType<$NonMaybeType<NativeFeatureFlags[K]>>,
+  defaultValue: ReturnType<NonNullable<NativeFeatureFlags[K]>>,
   skipUnavailableNativeModuleError: boolean = false,
-): Getter<ReturnType<$NonMaybeType<NativeFeatureFlags[K]>>> {
+): Getter<ReturnType<NonNullable<NativeFeatureFlags[K]>>> {
   return createGetter(
     configName,
     () => {

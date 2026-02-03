@@ -49,10 +49,7 @@ Pod::Spec.new do |s|
                             "HEADER_SEARCH_PATHS" => header_search_path.join(" "),
                           }
 
-  if ENV['USE_FRAMEWORKS']
-    s.header_mappings_dir     = './'
-    s.module_name             = 'React_FabricComponents'
-  end
+  resolve_use_frameworks(s, header_mappings_dir: "./", module_name: "React_FabricComponents")
 
   s.dependency "React-jsiexecutor"
   s.dependency "RCTRequired"
@@ -150,12 +147,6 @@ Pod::Spec.new do |s|
       sss.source_files         = "react/renderer/components/virtualview/**/*.{m,mm,cpp,h}"
       sss.exclude_files        = "react/renderer/components/virtualview/tests"
       sss.header_dir           = "react/renderer/components/virtualview"
-    end
-
-     ss.subspec "virtualviewexperimental" do |sss|
-      sss.source_files         = "react/renderer/components/virtualviewexperimental/**/*.{m,mm,cpp,h}"
-      sss.exclude_files        = "react/renderer/components/virtualviewexperimental/tests"
-      sss.header_dir           = "react/renderer/components/virtualviewexperimental"
     end
 
     # Legacy header paths for backwards compat

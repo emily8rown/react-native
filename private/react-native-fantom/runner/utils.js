@@ -26,13 +26,13 @@ export enum HermesVariant {
 
 export function getBuckOptionsForHermes(
   variant: HermesVariant,
-): $ReadOnlyArray<string> {
+): ReadonlyArray<string> {
   const baseOptions = EnvironmentOptions.enableJSMemoryInstrumentation
     ? ['-c hermes.memory_instrumentation=true']
     : [];
   switch (variant) {
     case HermesVariant.Hermes:
-      return baseOptions;
+      return [...baseOptions, '-c hermes.static_hermes=legacy'];
     case HermesVariant.StaticHermesStable:
       return [...baseOptions, '-c hermes.static_hermes=stable'];
     case HermesVariant.StaticHermesExperimental:
@@ -53,9 +53,13 @@ export function getHermesCompilerTarget(variant: HermesVariant): string {
 
 export function getBuckModesForPlatform(
   enableRelease: boolean = false,
-): $ReadOnlyArray<string> {
-  let mode = enableRelease ? 'opt' : 'dev';
+): ReadonlyArray<string> {
+  let modes = ['@//xplat/mode/react-native/granite'];
+  if (enableRelease) {
+    modes.push('@//xplat/mode/hermes/opt');
+  }
 
+  let mode = enableRelease ? 'opt' : 'dev';
   if (enableRelease) {
     if (EnvironmentOptions.enableASAN || EnvironmentOptions.enableTSAN) {
       printConsoleLog({
@@ -101,7 +105,13 @@ export function getBuckModesForPlatform(
       throw new Error(`Unsupported platform: ${os.platform()}`);
   }
 
-  return ['@//xplat/mode/react-native/granite', osPlatform];
+  modes.push(osPlatform);
+  return modes;
+}
+
+// TODO: T240293839 Remove when we get rid of RN_USE_ANIMATION_BACKEND preprocessor flag
+export function getConfigForAnimationBackend(): ReadonlyArray<string> {
+  return ['-c rn.use_animationbackend=true'];
 }
 
 export type AsyncCommandResult = {
@@ -126,7 +136,7 @@ export type SyncCommandResult = {
   stderr: string,
 };
 
-function maybeLogCommand(command: string, args: $ReadOnlyArray<string>): void {
+function maybeLogCommand(command: string, args: ReadonlyArray<string>): void {
   if (EnvironmentOptions.logCommands) {
     console.log(`RUNNING \`${command} ${args.join(' ')}\``);
   }
@@ -134,7 +144,7 @@ function maybeLogCommand(command: string, args: $ReadOnlyArray<string>): void {
 
 export function runCommand(
   command: string,
-  args: $ReadOnlyArray<string>,
+  args: ReadonlyArray<string>,
 ): AsyncCommandResult {
   maybeLogCommand(command, args);
 
@@ -146,7 +156,7 @@ export function runCommand(
       encoding: 'utf8',
       env: {
         ...process.env,
-        PATH: `/usr/local/bin:${process.env.PATH ?? ''}`,
+        PATH: `/usr/local/bin:/usr/bin:${process.env.PATH ?? ''}`,
       },
     },
   );
@@ -178,7 +188,7 @@ export function runCommand(
 
 export function runCommandSync(
   command: string,
-  args: $ReadOnlyArray<string>,
+  args: ReadonlyArray<string>,
 ): SyncCommandResult {
   maybeLogCommand(command, args);
 
@@ -186,7 +196,7 @@ export function runCommandSync(
     encoding: 'utf8',
     env: {
       ...process.env,
-      PATH: `/usr/local/bin:${process.env.PATH ?? ''}`,
+      PATH: `/usr/local/bin:/usr/bin:${process.env.PATH ?? ''}`,
     },
   });
 

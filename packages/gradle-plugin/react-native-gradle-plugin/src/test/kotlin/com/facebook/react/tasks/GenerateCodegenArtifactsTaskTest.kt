@@ -138,16 +138,16 @@ class GenerateCodegenArtifactsTaskTest {
           // language=JSON
           writeText(
               """
-        {
-            "name": "@a/library",
-            "codegenConfig": {
-                "name": "an-awesome-library",
-                "android": {
-                  "javaPackageName": "com.awesome.package"
-                }
-            }
-        }
-        """
+              {
+                  "name": "@a/library",
+                  "codegenConfig": {
+                      "name": "an-awesome-library",
+                      "android": {
+                        "javaPackageName": "com.awesome.package"
+                      }
+                  }
+              }
+              """
                   .trimIndent()
           )
         }
@@ -172,12 +172,12 @@ class GenerateCodegenArtifactsTaskTest {
           // language=JSON
           writeText(
               """
-        {
-            "name": "@a/library",
-            "codegenConfig": {
-            }
-        }
-        """
+              {
+                  "name": "@a/library",
+                  "codegenConfig": {
+                  }
+              }
+              """
                   .trimIndent()
           )
         }
@@ -198,10 +198,10 @@ class GenerateCodegenArtifactsTaskTest {
   @Test
   fun resolveTaskParameters_withMissingPackageJson_usesGradleOne() {
     val task =
-        createTestTask<GenerateCodegenArtifactsTask> {
-          it.packageJsonFile.set(File(tempFolder.root, "package.json"))
-          it.codegenJavaPackageName.set("com.example.test")
-          it.libraryName.set("a-library-name-from-gradle")
+        createTestTask<GenerateCodegenArtifactsTask> { task ->
+          task.packageJsonFile.set(File(tempFolder.root, "package.json"))
+          task.codegenJavaPackageName.set("com.example.test")
+          task.libraryName.set("a-library-name-from-gradle")
         }
 
     val (libraryName, javaPackageName) = task.resolveTaskParameters()

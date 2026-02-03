@@ -280,7 +280,11 @@ public open class DevServerHelper(
   ): String {
     val dev = devMode
     val additionalOptionsBuilder = StringBuilder()
-    for ((key, value) in packagerConnectionSettings.additionalOptionsForPackager) {
+    val packagerOptions =
+        packagerConnectionSettings.updatePackagerOptions(
+            packagerConnectionSettings.additionalOptionsForPackager
+        )
+    for ((key, value) in packagerOptions) {
       if (value.isEmpty()) {
         continue
       }
@@ -352,7 +356,11 @@ public open class DevServerHelper(
   }
 
   /** Attempt to open the JS debugger on the host machine (on-device CDP debugging). */
-  public fun openDebugger(context: ReactContext?, errorMessage: String?, landingView: String?) {
+  public fun openDebugger(
+      context: ReactContext?,
+      errorMessage: String?,
+      panel: String?,
+  ) {
     // TODO(huntie): Requests to dev server should not assume 'http' URL scheme
     val requestUrlBuilder = StringBuilder()
 
@@ -365,8 +373,8 @@ public open class DevServerHelper(
         )
     )
 
-    if (landingView != null) {
-      requestUrlBuilder.append("&landingView=" + Uri.encode(landingView))
+    if (panel != null) {
+      requestUrlBuilder.append("&panel=" + Uri.encode(panel))
     }
 
     val request =

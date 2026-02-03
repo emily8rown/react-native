@@ -18,7 +18,7 @@ jest.mock('../LogBoxSymbolication', () => {
   return {__esModule: true, symbolicate: jest.fn(), deleteStack: jest.fn()};
 });
 
-type CodeCodeFrame = $ReadOnly<{
+type CodeCodeFrame = Readonly<{
   content: string,
   location: ?{
     row: number,
@@ -78,7 +78,7 @@ function getLogBoxLog() {
 
 function getLogBoxSymbolication(): {
   symbolicate: JestMockFn<
-    $ReadOnlyArray<Array<StackFrame>>,
+    ReadonlyArray<Array<StackFrame>>,
     Promise<SymbolicatedStackTrace>,
   >,
 } {
@@ -113,7 +113,7 @@ const createComponentStack = (methodNames: Array<string>) =>
   }));
 
 function mockSymbolicate(
-  stack: $ReadOnlyArray<StackFrame>,
+  stack: ReadonlyArray<StackFrame>,
   stackCodeFrame: ?CodeCodeFrame,
   componentCodeFrame: ?CodeCodeFrame,
 ): SymbolicatedStackTrace {

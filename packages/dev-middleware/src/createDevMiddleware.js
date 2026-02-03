@@ -23,9 +23,7 @@ import connect from 'connect';
 import path from 'path';
 import serveStaticMiddleware from 'serve-static';
 
-type Options = $ReadOnly<{
-  projectRoot: string,
-
+type Options = Readonly<{
   /**
    * The base URL to the dev server, as reachable from the machine on which
    * dev-middleware is hosted. Typically `http://localhost:${metroPort}`.
@@ -72,13 +70,12 @@ type Options = $ReadOnly<{
   unstable_trackInspectorProxyEventLoopPerf?: boolean,
 }>;
 
-type DevMiddlewareAPI = $ReadOnly<{
+type DevMiddlewareAPI = Readonly<{
   middleware: NextHandleFunction,
   websocketEndpoints: {[path: string]: ws$WebSocketServer},
 }>;
 
 export default function createDevMiddleware({
-  projectRoot,
   serverBaseUrl,
   logger,
   // $FlowFixMe[incompatible-type]
@@ -92,10 +89,10 @@ export default function createDevMiddleware({
   const eventReporter = createWrappedEventReporter(
     unstable_eventReporter,
     logger,
+    experiments,
   );
 
   const inspectorProxy = new InspectorProxy(
-    projectRoot,
     serverBaseUrl,
     eventReporter,
     experiments,
@@ -141,7 +138,7 @@ function getExperiments(config: ExperimentsConfig): Experiments {
   return {
     enableOpenDebuggerRedirect: config.enableOpenDebuggerRedirect ?? false,
     enableNetworkInspector: config.enableNetworkInspector ?? false,
-    enableStandaloneFuseboxShell: config.enableStandaloneFuseboxShell ?? false,
+    enableStandaloneFuseboxShell: config.enableStandaloneFuseboxShell ?? true,
   };
 }
 
@@ -152,6 +149,7 @@ function getExperiments(config: ExperimentsConfig): Experiments {
 function createWrappedEventReporter(
   reporter: ?EventReporter,
   logger: ?Logger,
+  experiments: Experiments,
 ): EventReporter {
   return {
     logEvent(event: ReportableEvent) {
@@ -162,14 +160,35 @@ function createWrappedEventReporter(
             event.appId ?? 'unknown',
           );
           break;
-        case 'fusebox_console_notice':
-          logger?.info(
-            '\u001B[1m\u001B[7m💡 JavaScript logs have moved!\u001B[22m They can now be ' +
-              'viewed in React Native DevTools. Tip: Type \u001B[1mj\u001B[22m in ' +
-              'the terminal to open (requires Google Chrome or Microsoft Edge).' +
-              '\u001B[27m',
-          );
-          break;
+        case 'fusebox_shell_preparation_attempt':
+          switch (event.result.code) {
+            case 'success':
+            case 'not_implemented':
+              break;
+            case 'unexpected_error': {
+              let message =
+                event.result.humanReadableMessage ??
+                'An unknown error occurred while installing React Native DevTools.';
+              if (event.result.verboseInfo != null) {
+                message += ` Details:\n\n${event.result.verboseInfo}`;
+              } else {
+                message += '.';
+              }
+              logger?.error(message);
+              break;
+            }
+            case 'possible_corruption':
+            case 'platform_not_supported':
+            case 'likely_offline':
+              logger?.warn(
+                event.result.humanReadableMessage ??
+                  `An error of type ${event.result.code} occurred while installing React Native DevTools.`,
+              );
+              break;
+            default:
+              (event.result.code: empty);
+              break;
+          }
       }
 
       reporter?.logEvent(event);

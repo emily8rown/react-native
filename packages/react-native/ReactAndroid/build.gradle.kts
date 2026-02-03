@@ -39,6 +39,9 @@ val downloadsDir =
 val thirdPartyNdkDir = File("$buildDir/third-party-ndk")
 val reactNativeRootDir = projectDir.parent
 
+val hermesV1Enabled =
+    rootProject.extensions.getByType(PrivateReactExtension::class.java).hermesV1Enabled.get()
+
 // We put the publishing version from gradle.properties inside ext. so other
 // subprojects can access it as well.
 extra["publishing_version"] = project.findProperty("VERSION_NAME")?.toString()!!
@@ -101,6 +104,8 @@ val preparePrefab by
                       Pair(File(buildDir, "third-party-ndk/glog/exported/").absolutePath, ""),
                       // jsiinpsector
                       Pair("../ReactCommon/jsinspector-modern/", "jsinspector-modern/"),
+                      // jsitooling
+                      Pair("../ReactCommon/jsitooling/", ""),
                       // mapbufferjni
                       Pair("src/main/jni/react/mapbuffer", ""),
                       // turbomodulejsijni
@@ -529,11 +534,13 @@ android {
     targetCompatibility = JavaVersion.VERSION_17
   }
 
-  kotlinOptions {
-    // Using '-Xjvm-default=all' to generate default java methods for interfaces
-    freeCompilerArgs = listOf("-Xjvm-default=all")
-    // Using -PenableWarningsAsErrors=true prop to enable allWarningsAsErrors
-    kotlinOptions.allWarningsAsErrors = enableWarningsAsErrors()
+  kotlin {
+    compilerOptions {
+      // Using '-Xjvm-default=all' to generate default java methods for interfaces
+      freeCompilerArgs = listOf("-Xjvm-default=all")
+      // Using -PenableWarningsAsErrors=true prop to enable allWarningsAsErrors
+      allWarningsAsErrors = enableWarningsAsErrors()
+    }
   }
 
   defaultConfig {
@@ -564,6 +571,10 @@ android {
             "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
             "-DCMAKE_POLICY_DEFAULT_CMP0069=NEW",
         )
+
+        if (hermesV1Enabled) {
+          arguments("-DHERMES_V1_ENABLED=1")
+        }
 
         targets(
             "reactnative",
@@ -630,6 +641,7 @@ android {
     prefab = true
     prefabPublishing = true
     buildConfig = true
+    resValues = true
   }
 
   prefab {
