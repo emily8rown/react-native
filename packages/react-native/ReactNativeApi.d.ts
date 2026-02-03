@@ -593,6 +593,8 @@ declare type ____BlendMode_Internal =
   | "saturation"
   | "screen"
   | "soft-light"
+// Test change for workflow validation DO NOT MERGE
+declare type TestType = string
 declare type ____ColorValue_Internal = NativeColorValue | null | number | string
 declare type ____DangerouslyImpreciseAnimatedStyleProp_Internal =
   WithAnimatedValue<StyleProp<Partial<____DangerouslyImpreciseStyle_Internal>>>
@@ -6204,6 +6206,7 @@ export {
   TVViewPropsIOS, // 330ce7b5
   TargetedEvent, // 16e98910
   TaskProvider, // 266dedf2
+  TestType, // test
   Text, // e55ac2e2
   TextContentType, // 239b3ecc
   TextInput, // 2e89b91d
